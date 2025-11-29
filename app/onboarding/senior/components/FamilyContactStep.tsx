@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { signUpWithEmail } from '@/lib/firebase/auth';
 
 const familyContactSchema = z.object({
   family_name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
@@ -16,12 +18,16 @@ type FamilyContactData = z.infer<typeof familyContactSchema>;
 
 interface StepProps {
   data: any;
-  onComplete: (data: any) => void;
+  onComplete?: (data: any) => void;
   onBack?: () => void;
   isSubmitting?: boolean;
+  readOnly?: boolean;
 }
 
-export default function FamilyContactStep({ data, onComplete, onBack, isSubmitting }: StepProps) {
+export default function FamilyContactStep({ data, onComplete, onBack, isSubmitting, readOnly = false }: StepProps) {
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [accountError, setAccountError] = useState<string>('');
+
   const {
     register,
     handleSubmit,
@@ -37,8 +43,42 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
     },
   });
 
-  const onSubmit = (formData: FamilyContactData) => {
-    onComplete(formData);
+  const onSubmit = async (formData: FamilyContactData) => {
+    if (readOnly || !onComplete) return;
+
+    setIsCreatingAccount(true);
+    setAccountError('');
+
+    try {
+      // Create family account when submitting this step
+      let familyUserId: string | null = null;
+      try {
+        const familyUser = await signUpWithEmail(
+          formData.family_email,
+          formData.family_password,
+          'family',
+          formData.family_name
+        );
+        familyUserId = familyUser.uid;
+      } catch (err: any) {
+        // If account already exists, that's okay - we'll just link it
+        if (err.code === 'auth/email-already-in-use') {
+          setAccountError('Este email ya está registrado. El familiar podrá usar su cuenta existente.');
+          // Continue anyway - we'll link the existing account
+        } else {
+          throw new Error(`Error creando cuenta del familiar: ${err.message}`);
+        }
+      }
+
+      // Pass the familyUserId along with the form data
+      onComplete({
+        ...formData,
+        family_userId: familyUserId,
+      });
+    } catch (err: any) {
+      setAccountError(err.message || 'Error creando cuenta del familiar');
+      setIsCreatingAccount(false);
+    }
   };
 
   return (
@@ -62,7 +102,9 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
         <input
           {...register('family_name')}
           type="text"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          disabled={readOnly}
+          readOnly={readOnly}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="Ej: Ana María Palacios"
         />
         {errors.family_name && (
@@ -77,7 +119,8 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
         </label>
         <select
           {...register('family_relationship')}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          disabled={readOnly}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
           <option value="">Seleccione...</option>
           <option value="Hijo/a">Hijo/a</option>
@@ -100,7 +143,9 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
         <input
           {...register('family_phone')}
           type="tel"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          disabled={readOnly}
+          readOnly={readOnly}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="+51 999 888 777"
         />
         {errors.family_phone && (
@@ -116,7 +161,9 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
         <input
           {...register('family_email')}
           type="email"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          disabled={readOnly}
+          readOnly={readOnly}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="familiar@email.com"
         />
         {errors.family_email && (
@@ -135,7 +182,9 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
         <input
           {...register('family_password')}
           type="password"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          disabled={readOnly}
+          readOnly={readOnly}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="Mínimo 6 caracteres"
           minLength={6}
         />
@@ -144,25 +193,44 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
         )}
       </div>
 
+      {/* Error Message */}
+      {accountError && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{accountError}</p>
+        </div>
+      )}
+
       {/* Navigation */}
-      <div className="flex gap-4 pt-6 border-t">
-        {onBack && (
+      {!readOnly && (
+        <div className="flex gap-4 pt-6 border-t">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              disabled={isCreatingAccount || isSubmitting}
+              className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Volver
+            </button>
+          )}
           <button
-            type="button"
-            onClick={onBack}
-            className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+            type="submit"
+            disabled={isCreatingAccount || isSubmitting}
+            className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            Volver
+            {isCreatingAccount ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                Creando cuenta del familiar...
+              </>
+            ) : isSubmitting ? (
+              'Guardando...'
+            ) : (
+              'Siguiente: Revisar'
+            )}
           </button>
-        )}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? 'Guardando...' : 'Siguiente: Revisar'}
-        </button>
-      </div>
+        </div>
+      )}
     </form>
   );
 }

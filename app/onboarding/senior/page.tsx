@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase/config';
-import { signUpWithEmail } from '@/lib/firebase/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import BasicInfoStep from './components/BasicInfoStep';
 import MedicalProfileStep from './components/MedicalProfileStep';
 import SeniorNeedsStep from './components/SeniorNeedsStep';
@@ -35,6 +35,7 @@ interface SeniorFormData {
   family_phone: string;
   family_email: string;
   family_password?: string;
+  family_userId?: string; // Created in FamilyContactStep
   
   // Profile Photo (optional across steps)
   profilePhoto?: {
@@ -53,11 +54,14 @@ const STEPS = [
 
 export default function SeniorOnboarding() {
   const router = useRouter();
+  const { userData } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<SeniorFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>('');
 
+  // Check if user is family (read-only mode)
+  const isFamilyView = userData?.role === 'family';
   const CurrentStepComponent = STEPS[currentStep - 1].component;
 
   const handleStepComplete = (stepData: Partial<SeniorFormData>) => {
@@ -79,25 +83,12 @@ export default function SeniorOnboarding() {
       const user = auth.currentUser;
       if (!user) throw new Error('No hay usuario autenticado');
 
-      // Create family account if email and password are provided
-      let familyUserId: string | null = null;
-      if (finalData.family_email && finalData.family_password) {
-        try {
-          const familyUser = await signUpWithEmail(
-            finalData.family_email,
-            finalData.family_password,
-            'family',
-            finalData.family_name
-          );
-          familyUserId = familyUser.uid;
-        } catch (err: any) {
-          // If account already exists, that's okay - we'll just link it
-          console.warn('Error creating family account (may already exist):', err.message);
-        }
-      }
+      // Family account should already be created in FamilyContactStep
+      // Just use the family_userId if provided
+      const familyUserId = finalData.family_userId || null;
 
       // Prepare data without password (don't store password in Firestore)
-      const { family_password, ...dataToSave } = finalData;
+      const { family_password, family_userId: _, ...dataToSave } = finalData;
 
       // Save to Firestore
       await setDoc(doc(db, 'seniors', user.uid), {
@@ -177,11 +168,19 @@ export default function SeniorOnboarding() {
 
         {/* Current Step */}
         <div className="bg-white rounded-lg shadow-md p-8">
+          {isFamilyView && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Modo de solo lectura:</strong> Como familiar, puedes observar el proceso de onboarding pero no puedes editarlo.
+              </p>
+            </div>
+          )}
           <CurrentStepComponent
             data={formData}
-            onComplete={handleStepComplete}
-            onBack={currentStep > 1 ? handleBack : undefined}
+            onComplete={isFamilyView ? () => {} : handleStepComplete}
+            onBack={isFamilyView ? undefined : (currentStep > 1 ? handleBack : undefined)}
             isSubmitting={isSubmitting}
+            readOnly={isFamilyView}
           />
           
           {error && (

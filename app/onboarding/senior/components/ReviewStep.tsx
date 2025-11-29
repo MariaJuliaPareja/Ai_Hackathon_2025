@@ -107,6 +107,11 @@ export default function ReviewStep({ data, onComplete, onBack, isSubmitting }: S
             <p><strong>Relación:</strong> {data.family_relationship}</p>
             <p><strong>Teléfono:</strong> {data.family_phone}</p>
             <p><strong>Email:</strong> {data.family_email}</p>
+            {data.family_password && (
+              <p className="text-green-600">
+                <strong>✓</strong> Se creará una cuenta para el familiar
+              </p>
+            )}
           </div>
         </div>
       </div>

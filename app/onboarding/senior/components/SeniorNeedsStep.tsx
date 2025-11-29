@@ -16,9 +16,10 @@ type SeniorNeedsData = z.infer<typeof seniorNeedsSchema>;
 
 interface StepProps {
   data: any;
-  onComplete: (data: any) => void;
+  onComplete?: (data: any) => void;
   onBack?: () => void;
   isSubmitting?: boolean;
+  readOnly?: boolean;
 }
 
 const ASSISTANCE_TASKS = [
@@ -32,7 +33,7 @@ const ASSISTANCE_TASKS = [
   { id: 'physical_therapy', label: 'Apoyo en terapia física' },
 ];
 
-export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting }: StepProps) {
+export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting, readOnly = false }: StepProps) {
   const {
     register,
     handleSubmit,
@@ -68,6 +69,8 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
   };
 
   const onSubmit = (formData: SeniorNeedsData) => {
+    if (readOnly || !onComplete) return;
+    
     // Join medication times into comma-separated string for ML
     const joinedTimes = medicationTimes.filter(t => t.trim()).join(', ');
     
@@ -106,9 +109,11 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
                 value={time}
                 onChange={(e) => updateMedicationTime(index, e.target.value)}
                 placeholder="Ej: 8:00 AM"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                disabled={readOnly}
+                readOnly={readOnly}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
-              {medicationTimes.length > 1 && (
+              {medicationTimes.length > 1 && !readOnly && (
                 <button
                   type="button"
                   onClick={() => removeMedicationTime(index)}
@@ -121,13 +126,15 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
           ))}
         </div>
         
-        <button
-          type="button"
-          onClick={addMedicationTime}
-          className="mt-2 text-sm text-blue-600 hover:underline"
-        >
-          + Agregar otro horario
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={addMedicationTime}
+            className="mt-2 text-sm text-blue-600 hover:underline"
+          >
+            + Agregar otro horario
+          </button>
+        )}
         
         <input
           type="hidden"
@@ -163,7 +170,9 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
                     type="checkbox"
                     value={task.id}
                     checked={field.value?.includes(task.id)}
+                    disabled={readOnly}
                     onChange={(e) => {
+                      if (readOnly) return;
                       const checked = e.target.checked;
                       const currentValue = field.value || [];
                       
@@ -173,7 +182,7 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
                         field.onChange(currentValue.filter((v) => v !== task.id));
                       }
                     }}
-                    className="mr-3 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="mr-3 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
                   />
                   <span className="text-gray-700">{task.label}</span>
                 </label>
@@ -194,7 +203,8 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
         </label>
         <select
           {...register('care_intensity')}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          disabled={readOnly}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
           <option value="light">Ligero - Pocas horas al día</option>
           <option value="moderate">Moderado - Medio tiempo</option>
@@ -217,30 +227,34 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
         <textarea
           {...register('special_requirements')}
           rows={3}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          disabled={readOnly}
+          readOnly={readOnly}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="Ejemplo: Requiere cuidador que hable quechua, experiencia con sonda PEG, dieta para diabéticos..."
         />
       </div>
 
       {/* Navigation */}
-      <div className="flex gap-4 pt-6 border-t">
-        {onBack && (
+      {!readOnly && (
+        <div className="flex gap-4 pt-6 border-t">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+            >
+              Volver
+            </button>
+          )}
           <button
-            type="button"
-            onClick={onBack}
-            className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Volver
+            {isSubmitting ? 'Guardando...' : 'Siguiente: Contacto Familiar'}
           </button>
-        )}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? 'Guardando...' : 'Siguiente: Contacto Familiar'}
-        </button>
-      </div>
+        </div>
+      )}
     </form>
   );
 }
