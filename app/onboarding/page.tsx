@@ -61,6 +61,12 @@ export default function OnboardingPage() {
     return <CaregiverOnboardingForm />;
   }
 
+  // If user has senior or family role, redirect to senior onboarding
+  if (userData?.role === "senior" || userData?.role === "family") {
+    router.push("/onboarding/senior");
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">

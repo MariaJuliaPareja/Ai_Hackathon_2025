@@ -163,49 +163,51 @@ export interface Certificate {
  * Senior profile document
  * 
  * Firestore path: /seniors/{userId}
+ * 
+ * @note This interface matches the simplified structure used in the onboarding form.
+ * All ML-critical fields are stored at the top level for easy access by matching algorithms.
  */
 export interface SeniorProfile {
-  /** Document ID (same as userId) */
-  id: string;
-  /** User ID from Firebase Auth */
   userId: string;
+  email: string;
+  role: 'senior';
   
-  // Personal Information
-  personalInfo: {
-    /** Full name */
-    name: string;
-    /** Email address */
-    email?: string;
-    /** Location (city, state) */
-    location: string;
-    /** Profile photo stored as Base64 */
-    profilePhoto?: ProfilePhoto;
-    /** @deprecated Old Storage URL */
-    profilePhotoURL?: string;
+  // Basic Info
+  name: string;
+  age: number;
+  gender: 'M' | 'F' | 'other';
+  location: string;
+  profilePhoto?: {
+    base64: string;
+    thumbnail: string;
   };
   
-  // Care Requirements
-  careRequirements?: {
-    /** Required specializations */
-    requiredSpecializations?: string[];
-    /** Medical conditions */
-    conditions?: string[];
-    /** Age */
-    age?: number;
-    /** Budget range */
-    budgetRange?: { min: number; max: number };
-  };
+  // Medical Profile - ML CRITICAL
+  medical_comorbidities: string;
+  mobility_score: number; // 1-4
+  cognitive_status: 'normal' | 'mild_impairment' | 'moderate_impairment' | 'severe_impairment';
   
-  // Matching Status
-  matchStatus?: 'pending' | 'ready' | 'error';
-  matchCount?: number;
+  // Care Needs - ML CRITICAL
+  routine_medication_times: string;
+  routine_assistance_tasks: string[];
+  care_intensity: 'light' | 'moderate' | 'intensive' | '24_7';
+  special_requirements?: string;
   
-  // Embedding for matching
-  embedding?: number[];
+  // Family Contact
+  family_name: string;
+  family_relationship: string;
+  family_phone: string;
+  family_email: string;
   
-  // Metadata
+  // System
+  onboardingCompleted: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  
+  // Matching (populated by backend)
+  embedding?: number[]; // 384-dim vector
+  match_status?: 'pending' | 'processing' | 'ready';
+  match_count?: number;
 }
 
 /**
