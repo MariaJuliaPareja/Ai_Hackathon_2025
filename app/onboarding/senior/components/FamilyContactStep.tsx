@@ -46,11 +46,20 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
   const onSubmit = async (formData: FamilyContactData) => {
     if (readOnly || !onComplete) return;
 
+    // If family account was already created in the modal, just pass the data
+    if (data?.family_userId) {
+      onComplete({
+        ...formData,
+        family_userId: data.family_userId,
+      });
+      return;
+    }
+
     setIsCreatingAccount(true);
     setAccountError('');
 
     try {
-      // Create family account when submitting this step
+      // Create family account when submitting this step (fallback if modal wasn't used)
       let familyUserId: string | null = null;
       try {
         const familyUser = await signUpWithEmail(
@@ -89,8 +98,17 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
 
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
         <p className="text-sm text-yellow-800">
-          Este contacto será notificado sobre el cuidado y podrá monitorear el progreso del adulto mayor.
-          Se creará una cuenta para que pueda acceder a la plataforma.
+          {data?.family_userId ? (
+            <>
+              <strong>✓ Cuenta del familiar creada:</strong> La información del familiar ya fue registrada. 
+              El familiar recibirá acceso para observar el proceso de onboarding y monitorear el cuidado del adulto mayor.
+            </>
+          ) : (
+            <>
+              Este contacto será notificado sobre el cuidado y podrá monitorear el progreso del adulto mayor.
+              Se creará una cuenta para que pueda acceder a la plataforma.
+            </>
+          )}
         </p>
       </div>
 

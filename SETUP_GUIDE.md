@@ -185,18 +185,16 @@ npm run dev
 ```
 
 You should see:
-```
-  ▲ Next.js 14.2.33
+  Next.js 14.2.33
   - Local:        http://localhost:3000
   - ready started server on 0.0.0.0:3000
-```
+
 
 ## Step 7: Open the Application
 
 Open your browser and navigate to:
-```
+
 http://localhost:3000
-```
 
 ## Step 8: Test the Application
 
@@ -271,7 +269,7 @@ npm run dev -- -p 3001
 If you want to use the Cloud Functions (embedding generation, matching, etc.):
 
 ### Prerequisites
-- Google Cloud SDK installed
+- 
 - Billing enabled on GCP project
 - Service account with permissions
 

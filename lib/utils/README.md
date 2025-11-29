@@ -95,3 +95,4 @@ const thumbnail = await createThumbnail(base64Image, 100);
 // Returns 100x100px thumbnail Base64
 ```
 
+

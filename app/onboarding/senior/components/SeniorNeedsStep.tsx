@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import FamilyContactModal from './FamilyContactModal';
 
 const seniorNeedsSchema = z.object({
   routine_medication_times: z.string().min(5, 'Por favor ingrese al menos un horario de medicación'),
@@ -34,6 +35,9 @@ const ASSISTANCE_TASKS = [
 ];
 
 export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting, readOnly = false }: StepProps) {
+  const [showFamilyModal, setShowFamilyModal] = useState(false);
+  const [familyData, setFamilyData] = useState<any>(null);
+
   const {
     register,
     handleSubmit,
@@ -71,16 +75,41 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
   const onSubmit = (formData: SeniorNeedsData) => {
     if (readOnly || !onComplete) return;
     
-    // Join medication times into comma-separated string for ML
-    const joinedTimes = medicationTimes.filter(t => t.trim()).join(', ');
+    // If family data already exists, proceed directly
+    if (familyData) {
+      const joinedTimes = medicationTimes.filter(t => t.trim()).join(', ');
+      onComplete({
+        ...formData,
+        routine_medication_times: joinedTimes,
+        ...familyData, // Include family data
+      });
+      return;
+    }
     
-    onComplete({
-      ...formData,
-      routine_medication_times: joinedTimes,
-    });
+    // Otherwise, show modal to collect family information
+    setShowFamilyModal(true);
+  };
+
+  const handleFamilyModalComplete = (familyInfo: any) => {
+    setFamilyData(familyInfo);
+    setShowFamilyModal(false);
+    
+    // Now proceed with form submission
+    if (onComplete) {
+      const joinedTimes = medicationTimes.filter(t => t.trim()).join(', ');
+      const formData = {
+        routine_medication_times: joinedTimes,
+        routine_assistance_tasks: watch('routine_assistance_tasks') || [],
+        care_intensity: watch('care_intensity') || 'moderate',
+        special_requirements: watch('special_requirements') || '',
+        ...familyInfo, // Include family data
+      };
+      onComplete(formData);
+    }
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         Necesidades de Cuidado y Rutina Diaria
@@ -256,6 +285,14 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
         </div>
       )}
     </form>
+    
+    {/* Family Contact Modal */}
+    <FamilyContactModal
+      isOpen={showFamilyModal}
+      onClose={() => setShowFamilyModal(false)}
+      onComplete={handleFamilyModalComplete}
+    />
+  </>
   );
 }
 

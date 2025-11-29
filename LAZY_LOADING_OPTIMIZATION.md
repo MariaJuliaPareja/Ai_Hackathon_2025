@@ -221,3 +221,4 @@ useEffect(() => {
 7. `components/matches/types.ts` - Updated types
 8. `lib/firebase/caregivers-queries.ts` - New optimized query helpers
 
+

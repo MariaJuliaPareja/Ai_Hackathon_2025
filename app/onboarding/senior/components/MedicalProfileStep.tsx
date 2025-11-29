@@ -143,3 +143,4 @@ export default function MedicalProfileStep({ data, onComplete, onBack, isSubmitt
   );
 }
 
+

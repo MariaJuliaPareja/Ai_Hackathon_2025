@@ -101,3 +101,4 @@ export async function getCaregiverPhoto(caregiverId: string): Promise<string | u
   return data.personalInfo?.profilePhotoBase64;
 }
 
+

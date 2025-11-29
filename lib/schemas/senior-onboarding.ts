@@ -212,3 +212,4 @@ export const MEDICAL_EQUIPMENT = [
   "Otro",
 ] as const;
 
+

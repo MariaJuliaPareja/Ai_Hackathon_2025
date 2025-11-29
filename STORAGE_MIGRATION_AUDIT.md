@@ -477,3 +477,4 @@ caregivers/{userId}/certifications/{certId}
 **Audited By**: AI Assistant  
 **Next Review**: After certification migration
 
+

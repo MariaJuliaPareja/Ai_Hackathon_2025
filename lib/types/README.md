@@ -200,3 +200,4 @@ type CaregiverUpdate = UpdateDocument<CaregiverProfile>;
 - `lib/schemas/caregiver-onboarding.ts` - Zod validation schemas
 - `STORAGE_MIGRATION_AUDIT.md` - Migration documentation
 
+
