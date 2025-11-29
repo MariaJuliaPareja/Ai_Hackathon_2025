@@ -6,7 +6,7 @@ export function getRedirectPath(role?: UserRole): string {
   }
 
   // All roles go to dashboard for now
-  // You can customize this based on role if needed
+  // IA MODEL OPTIMIZATION NEXT!!!!!
   return "/dashboard";
 }
 

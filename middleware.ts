@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  // This is a basic middleware. For full auth protection,
-  // you'd want to verify Firebase tokens server-side using Firebase Admin SDK
-  // For now, client-side AuthGuard handles most protection
+  // IMPLEMENT Firebase Admin SDK!!!!
   
   return NextResponse.next();
 }

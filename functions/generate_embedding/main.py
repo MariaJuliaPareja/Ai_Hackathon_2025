@@ -1,6 +1,4 @@
-"""
-Cloud Function Gen2 for generating caregiver embeddings using fine-tuned sentence-transformer model.
-"""
+
 import os
 import json
 import logging

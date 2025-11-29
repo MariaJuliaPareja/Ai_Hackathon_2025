@@ -41,4 +41,5 @@ functions/**/*.pyc
 functions/**/.env
 functions/**/venv/
 functions/**/env/
+functions/**/test_*.py
 
