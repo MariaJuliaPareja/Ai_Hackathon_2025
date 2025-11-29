@@ -1,6 +1,4 @@
-import { httpsCallable } from "firebase/functions";
-import { getFunctions, Functions } from "firebase/functions";
-import { app } from "./config";
+import { CaregiverOnboardingFormData } from "@/lib/schemas/caregiver-onboarding";
 
 export interface EmbeddingRequest {
   text: string;
@@ -10,46 +8,48 @@ export interface EmbeddingRequest {
 export interface EmbeddingResponse {
   embedding: number[];
   success: boolean;
+  model_version?: string;
+  dimensions?: number;
   message?: string;
 }
 
-// Initialize functions only on client side
-let functions: Functions | null = null;
-
-if (typeof window !== "undefined") {
-  try {
-    functions = getFunctions(app);
-  } catch (error) {
-    console.warn("Firebase Functions not available:", error);
-  }
-}
-
 /**
- * Generates an embedding for caregiver profile text using Firebase Function
+ * Generates an embedding for caregiver profile text using Cloud Function HTTP endpoint
  */
 export async function generateCaregiverEmbedding(
   text: string,
   userId: string
 ): Promise<number[]> {
-  if (!functions) {
-    throw new Error("Firebase Functions not initialized");
-  }
+  // Get the Cloud Function URL from environment or use default
+  const functionUrl =
+    process.env.NEXT_PUBLIC_EMBEDDING_FUNCTION_URL ||
+    `https://us-central1-${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.cloudfunctions.net/generate_embedding`;
 
   try {
-    const generateEmbedding = httpsCallable<EmbeddingRequest, EmbeddingResponse>(
-      functions,
-      "generateCaregiverEmbedding"
-    );
-
-    const result = await generateEmbedding({
-      text,
-      userId,
+    const response = await fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        userId, // Include userId for logging/tracking if needed
+      }),
     });
 
-    if (result.data.success && result.data.embedding) {
-      return result.data.embedding;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    const data: EmbeddingResponse = await response.json();
+
+    if (data.success && data.embedding) {
+      return data.embedding;
     } else {
-      throw new Error(result.data.message || "Failed to generate embedding");
+      throw new Error(data.message || "Failed to generate embedding");
     }
   } catch (error) {
     console.error("Error generating embedding:", error);

@@ -1,0 +1,7 @@
+functions-framework==3.5.0
+sentence-transformers==2.2.2
+torch>=2.0.0
+transformers>=4.30.0
+numpy>=1.24.0
+gcsfs>=2023.6.0
+

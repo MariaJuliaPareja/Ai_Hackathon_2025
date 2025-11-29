@@ -35,3 +35,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Cloud Functions
+functions/**/__pycache__/
+functions/**/*.pyc
+functions/**/.env
+functions/**/venv/
+functions/**/env/
+
