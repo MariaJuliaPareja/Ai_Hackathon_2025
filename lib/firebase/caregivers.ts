@@ -1,9 +1,11 @@
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "./config";
 import { CaregiverOnboardingFormData } from "@/lib/schemas/caregiver-onboarding";
 import { generateCaregiverEmbedding, constructCaregiverDescription } from "./embeddings";
-// NOTE: Storage removed - profile photos are stored as Base64 strings in Firestore
-// Certification files still use Storage (if needed, can be converted later)
+import { Certificate } from "@/lib/types/firestore";
+// NOTE: Storage removed - all files stored as Base64 in Firestore
+// Profile photos: in main document
+// Certificates: in subcollection /certificates
 
 export interface CaregiverData {
   personalInfo: {
@@ -16,10 +18,11 @@ export interface CaregiverData {
   professionalInfo: {
     yearsOfExperience: number;
     specializations: string[];
+    certificationCount?: number; // Number of certificates in subcollection
     certifications?: Array<{
       name: string;
       fileUrl?: string;
-    }>;
+    }>; // @deprecated - use /certificates subcollection
   };
   experienceDescription: {
     experienceDescription: string;
@@ -52,21 +55,32 @@ export async function saveCaregiverProfile(
     }
   }
 
-  // Note: Certification files still use Storage for now
-  // If needed, these can also be converted to Base64 later
-  const certificationsWithUrls: Array<{ name: string; fileUrl?: string }> = [];
+  // Save certificates to subcollection as Base64
+  let certificationCount = 0;
   if (formData.professionalInfo.certifications) {
+    const certificatesRef = collection(db, "caregivers", userId, "certificates");
+    
     for (const cert of formData.professionalInfo.certifications) {
-      // For now, certifications still use file URLs
-      // In the future, these could also be Base64
-      let fileUrl: string | undefined;
-      if (typeof cert.file === "string") {
-        fileUrl = cert.file;
+      // Only save if file is provided and in Base64 format
+      if (cert.file && typeof cert.file === "object" && "base64" in cert.file) {
+        const certDoc: Omit<Certificate, "id"> = {
+          name: cert.name,
+          type: "professional", // Default type, can be enhanced later
+          file: {
+            base64: cert.file.base64,
+            originalName: cert.file.originalName,
+            mimeType: cert.file.mimeType,
+            sizeKB: cert.file.sizeKB,
+          },
+          verified: false,
+          uploadedAt: serverTimestamp() as any, // Firestore Timestamp
+        };
+        
+        // Create document with name as ID for easy lookup
+        const certId = cert.name.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+        await setDoc(doc(certificatesRef, certId), certDoc);
+        certificationCount++;
       }
-      certificationsWithUrls.push({
-        name: cert.name,
-        fileUrl,
-      });
     }
   }
 
@@ -94,7 +108,7 @@ export async function saveCaregiverProfile(
     professionalInfo: {
       yearsOfExperience: formData.professionalInfo.yearsOfExperience,
       specializations: formData.professionalInfo.specializations,
-      certifications: certificationsWithUrls.length > 0 ? certificationsWithUrls : undefined,
+      certificationCount: certificationCount > 0 ? certificationCount : undefined,
     },
     experienceDescription: formData.experienceDescription,
     availability: formData.availability,

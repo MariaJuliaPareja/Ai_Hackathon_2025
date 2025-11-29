@@ -29,14 +29,8 @@ npm install
 3. Select **Start in test mode** → **Next**
 4. Choose location → **Enable**
 
-#### Storage (Optional - Only for Certification Files)
-**Note**: Profile photos are stored as Base64 strings in Firestore to eliminate storage costs.
-
-If you need to upload certification files, you can set up Storage:
-1. Click **Storage** in left menu
-2. Click **Get started**
-3. Start in **test mode** → **Next**
-4. Use default location → **Done**
+#### Storage (Not Required)
+**Note**: This app uses Base64 inline storage in Firestore instead of Firebase Storage to eliminate storage costs. No Storage setup is needed.
 
 ### Step 4: Get Firebase Config
 
@@ -90,24 +84,9 @@ service cloud.firestore {
 
 **⚠️ WARNING**: These rules allow any authenticated user to read/write. Update for production!
 
-### Step 7: Set Storage Rules (Optional)
+### Step 7: Storage Rules (Not Required)
 
-**Note**: Profile photos use Base64 storage in Firestore. Storage is only needed for certification file uploads.
-
-If you set up Storage:
-1. Go to **Storage** → **Rules** tab
-2. Replace with:
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}
-```
-3. Click **Publish**
+**Note**: This app uses Base64 inline storage in Firestore. Firebase Storage is not used, so no Storage rules are needed.
 
 ### Step 8: Run the App
 
@@ -136,10 +115,10 @@ Navigate to: **http://localhost:3000**
 - [ ] Firebase project created
 - [ ] Authentication enabled (Email/Password + Google)
 - [ ] Firestore database created
-- [ ] Storage bucket created (optional - only for certification files)
+- [ ] Storage not required (using Base64 inline storage)
 - [ ] `.env.local` file created with correct values
 - [ ] Firestore rules updated
-- [ ] Storage rules updated (optional)
+- [ ] Storage rules not required
 - [ ] Dev server running (`npm run dev`)
 - [ ] Can access http://localhost:3000
 - [ ] Can register a new account
@@ -179,6 +158,7 @@ npm install
 - ✅ Register/Login with email or Google
 - ✅ Complete caregiver onboarding (5-step form with photo upload)
 - ✅ Upload profile photos (automatically compressed to Base64)
+- ✅ Upload certificates (PDFs and images stored as Base64)
 - ✅ View dashboard
 - ✅ Access matches page (for seniors)
 - ✅ View training and community pages
@@ -188,6 +168,47 @@ npm install
 This app stores profile photos as Base64-encoded strings directly in Firestore to eliminate storage costs. Images are automatically compressed to ~200KB before encoding.
 
 ⚠️ **Important**: Firestore documents have a 1MB limit. Our compression ensures photos stay well under this limit.
+
+## 📦 Storage Architecture (Updated for MVP)
+
+This app uses **Base64 inline storage** instead of Firebase Storage to minimize costs during the MVP phase.
+
+### How it works:
+
+1. **Profile Photos**:
+   - Uploaded images are compressed to ~200KB
+   - Converted to Base64 and stored in Firestore
+   - Thumbnails (100px) generated for list views
+
+2. **Certificates**:
+   - Stored in Firestore subcollections
+   - Each certificate in separate document (isolates size)
+   - PDFs validated to <800KB
+   - Images compressed to <700KB
+
+### Firestore Structure:
+
+```
+/caregivers/{userId}
+  ├─ profilePhoto: { base64, thumbnail, ... }
+  ├─ /certificates/{certId}
+  │   └─ file: { base64, originalName, ... }
+
+/seniors/{userId}
+  └─ profilePhoto: { base64, thumbnail, ... }
+```
+
+### Benefits:
+- ✅ No Firebase Storage costs
+- ✅ Faster loading (no separate HTTP requests)
+- ✅ Simpler architecture
+- ✅ Automatic compression
+
+### Size Limits:
+- Profile photos: 200KB (full) + 20KB (thumbnail)
+- Certificate images: 700KB max
+- Certificate PDFs: 800KB max
+- Firestore document: 1MB total limit
 
 ## 🔧 Optional: Cloud Functions
 

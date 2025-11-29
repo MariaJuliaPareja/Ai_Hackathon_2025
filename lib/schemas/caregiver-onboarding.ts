@@ -45,7 +45,25 @@ export const professionalInfoSchema = z.object({
   specializations: z.array(z.string()).min(1, "Selecciona al menos una especialización"),
   certifications: z.array(z.object({
     name: z.string(),
-    file: z.instanceof(File).optional().or(z.string().optional()),
+    file: z.union([
+      // New format: Base64 file object
+      z.object({
+        base64: z.string().refine(
+          (val) => {
+            if (!val.startsWith("data:")) return false;
+            const sizeKB = (val.length * 3) / 4 / 1024;
+            return sizeKB <= 900; // Max 900KB for Base64
+          },
+          { message: "El archivo debe ser menor a 900KB" }
+        ),
+        originalName: z.string(),
+        mimeType: z.string(),
+        sizeKB: z.number(),
+      }),
+      // Legacy format: File object or string URL
+      z.instanceof(File).optional(),
+      z.string().optional(),
+    ]).optional(),
   })).optional(),
 });
 

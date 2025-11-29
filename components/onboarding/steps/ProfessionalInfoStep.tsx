@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Upload, X, FileText } from "lucide-react";
+import { Upload, X, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { processFileForStorage, validateFile } from "@/lib/utils/fileProcessing";
 
 export default function ProfessionalInfoStep() {
   const {
@@ -20,6 +21,9 @@ export default function ProfessionalInfoStep() {
   const yearsOfExperience = watch("professionalInfo.yearsOfExperience") || 0;
   const specializations = watch("professionalInfo.specializations") || [];
   const certifications = watch("professionalInfo.certifications") || [];
+  
+  const [processingCerts, setProcessingCerts] = useState<Record<string, boolean>>({});
+  const [certErrors, setCertErrors] = useState<Record<string, string>>({});
 
   const toggleSpecialization = (spec: string) => {
     const current = specializations;
@@ -52,21 +56,95 @@ export default function ProfessionalInfoStep() {
     }
   };
 
-  const handleCertFileChange = (certName: string, file: File | null) => {
+  const handleCertFileChange = async (certName: string, file: File | null) => {
     const current = certifications;
     const existingIndex = current.findIndex((c) => c.name === certName);
     
-    if (existingIndex >= 0) {
-      const updated = [...current];
-      updated[existingIndex] = {
-        ...updated[existingIndex],
-        file: file || undefined,
-      };
-      setValue("professionalInfo.certifications", updated);
+    if (!file) {
+      // Remove file
+      if (existingIndex >= 0) {
+        const updated = [...current];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          file: undefined,
+        };
+        setValue("professionalInfo.certifications", updated);
+        setCertErrors((prev) => {
+          const next = { ...prev };
+          delete next[certName];
+          return next;
+        });
+      }
+      return;
+    }
+
+    // Validate file
+    const validation = validateFile(file, {
+      maxSizeMB: 5,
+      allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+    });
+
+    if (!validation.valid) {
+      setCertErrors((prev) => ({
+        ...prev,
+        [certName]: validation.error || 'Error de validación',
+      }));
+      return;
+    }
+
+    // Process file to Base64
+    setProcessingCerts((prev) => ({ ...prev, [certName]: true }));
+    setCertErrors((prev) => {
+      const next = { ...prev };
+      delete next[certName];
+      return next;
+    });
+
+    try {
+      const processed = await processFileForStorage(file, 'certificate');
+      
+      if (existingIndex >= 0) {
+        const updated = [...current];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          file: {
+            base64: processed.base64,
+            originalName: processed.originalName,
+            mimeType: processed.mimeType,
+            sizeKB: processed.sizeKB,
+          },
+        };
+        setValue("professionalInfo.certifications", updated);
+      } else {
+        // Add new certification with file
+        setValue("professionalInfo.certifications", [
+          ...current,
+          {
+            name: certName,
+            file: {
+              base64: processed.base64,
+              originalName: processed.originalName,
+              mimeType: processed.mimeType,
+              sizeKB: processed.sizeKB,
+            },
+          },
+        ]);
+      }
+    } catch (error: any) {
+      setCertErrors((prev) => ({
+        ...prev,
+        [certName]: error.message || 'Error procesando el archivo',
+      }));
+    } finally {
+      setProcessingCerts((prev) => {
+        const next = { ...prev };
+        delete next[certName];
+        return next;
+      });
     }
   };
 
-  const getCertFile = (certName: string): File | string | undefined => {
+  const getCertFile = (certName: string) => {
     const cert = certifications.find((c) => c.name === certName);
     return cert?.file;
   };
@@ -181,48 +259,56 @@ export default function ProfessionalInfoStep() {
                     </div>
                   </div>
                   {isSelected && (
-                    <div className="mt-3 pl-6">
+                    <div className="mt-3 pl-6 space-y-2">
                       <input
                         type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
                         onChange={(e) => {
                           const file = e.target.files?.[0] || null;
                           handleCertFileChange(certName, file);
                         }}
                         className="hidden"
                         id={`cert-file-${certName}`}
+                        disabled={processingCerts[certName]}
                       />
-                      <Label
-                        htmlFor={`cert-file-${certName}`}
-                        className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
-                      >
-                        {certFile instanceof File ? (
-                          <>
-                            <FileText className="h-4 w-4" />
-                            {certFile.name}
-                          </>
-                        ) : certFile ? (
-                          <>
-                            <FileText className="h-4 w-4" />
-                            Documento cargado
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4" />
-                            Subir certificado
-                          </>
-                        )}
-                      </Label>
-                      {certFile instanceof File && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="ml-2 h-8"
-                          onClick={() => handleCertFileChange(certName, null)}
+                      <div className="flex items-center gap-2">
+                        <Label
+                          htmlFor={`cert-file-${certName}`}
+                          className={`cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-sm ${
+                            processingCerts[certName] ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
+                          {processingCerts[certName] ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Procesando...
+                            </>
+                          ) : certFile && typeof certFile === 'object' && 'base64' in certFile ? (
+                            <>
+                              <FileText className="h-4 w-4" />
+                              {certFile.originalName} ({(certFile.sizeKB || 0).toFixed(0)}KB)
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4" />
+                              Subir certificado
+                            </>
+                          )}
+                        </Label>
+                        {certFile && typeof certFile === 'object' && 'base64' in certFile && !processingCerts[certName] && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8"
+                            onClick={() => handleCertFileChange(certName, null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {certErrors[certName] && (
+                        <p className="text-sm text-destructive">{certErrors[certName]}</p>
                       )}
                     </div>
                   )}

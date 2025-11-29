@@ -1,9 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
-// NOTE: Storage is no longer used - we store profile photos as Base64 strings directly in Firestore
-// to eliminate storage costs. See compressAndEncodeImage() in lib/utils/image-compression.ts
-// import { getStorage, FirebaseStorage } from "firebase/storage";
+// REMOVED: import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,8 +15,6 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
-// Storage removed - using Base64 inline storage instead
-// let storage: FirebaseStorage;
 
 if (typeof window !== "undefined") {
   if (!getApps().length) {
@@ -28,9 +24,18 @@ if (typeof window !== "undefined") {
   }
   auth = getAuth(app);
   db = getFirestore(app);
-  // Storage removed - using Base64 inline storage instead
-  // storage = getStorage(app);
 }
 
 export { app, auth, db };
+
+/**
+ * MIGRATION NOTE:
+ * Firebase Storage has been removed to reduce MVP costs.
+ * All images are now stored as compressed Base64 strings in Firestore.
+ * 
+ * - Profile photos: stored in profilePhoto.base64 (max 200KB)
+ * - Certificates: stored in subcollection /certificates (max 800KB each)
+ * 
+ * For migration of existing data, see scripts/migrateStorageToBase64.ts
+ */
 
