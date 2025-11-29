@@ -20,6 +20,16 @@ Processes caregiver-senior matching requests triggered by Firestore document cre
 
 **Documentation**: See [process_matching/README.md](./process_matching/README.md)
 
+### `retrainRankingModel`
+
+Retrains the ranking model daily using Vertex AI. Queries completed matches with ratings, trains LightGBM LambdaRank model, evaluates performance, and deploys if improved.
+
+**Location**: `functions/retrain_ranking_model/`
+
+**Documentation**: See [retrain_ranking_model/README.md](./retrain_ranking_model/README.md)
+
+**Trigger**: Cloud Scheduler (daily at 2 AM UTC)
+
 ## Deployment
 
 Each function has its own deployment script. Navigate to the function directory and follow its README for deployment instructions.

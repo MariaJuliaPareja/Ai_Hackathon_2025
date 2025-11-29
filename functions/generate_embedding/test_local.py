@@ -1,8 +1,4 @@
-"""
-Local testing script for the generate_embedding function.
-Run this after starting the function locally with:
-    functions-framework --target=generate_embedding --port=8080
-"""
+
 import requests
 import json
 
@@ -31,16 +27,16 @@ def test_generate_embedding():
         
         if response.status_code == 200:
             result = response.json()
-            print(f"\n✅ Success!")
+            print(f"\n Success!")
             print(f"Model Version: {result.get('model_version')}")
             print(f"Dimensions: {result.get('dimensions')}")
             print(f"Embedding length: {len(result.get('embedding', []))}")
             print(f"First 5 values: {result.get('embedding', [])[:5]}")
         else:
-            print(f"\n❌ Error: {response.text}")
+            print(f"\n Error: {response.text}")
             
     except requests.exceptions.RequestException as e:
-        print(f"\n❌ Request failed: {e}")
+        print(f"\n Request failed: {e}")
 
 if __name__ == "__main__":
     test_generate_embedding()

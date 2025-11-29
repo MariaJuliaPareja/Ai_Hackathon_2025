@@ -1,0 +1,9 @@
+functions-framework==3.5.0
+google-cloud-firestore==2.13.1
+google-cloud-storage==2.14.0
+google-cloud-aiplatform==1.38.1
+google-cloud-monitoring==2.16.0
+pandas==2.0.3
+numpy==1.24.3
+lightgbm==4.1.0
+
