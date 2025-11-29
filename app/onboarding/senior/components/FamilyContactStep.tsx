@@ -9,6 +9,7 @@ const familyContactSchema = z.object({
   family_relationship: z.string().min(2, 'Por favor especifique la relación familiar'),
   family_phone: z.string().regex(/^\+?[\d\s-()]+$/, 'Formato de teléfono inválido'),
   family_email: z.string().email('Email inválido'),
+  family_password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
 });
 
 type FamilyContactData = z.infer<typeof familyContactSchema>;
@@ -32,6 +33,7 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
       family_relationship: data?.family_relationship || '',
       family_phone: data?.family_phone || '',
       family_email: data?.family_email || '',
+      family_password: data?.family_password || '',
     },
   });
 
@@ -48,6 +50,7 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
         <p className="text-sm text-yellow-800">
           Este contacto será notificado sobre el cuidado y podrá monitorear el progreso del adulto mayor.
+          Se creará una cuenta para que pueda acceder a la plataforma.
         </p>
       </div>
 
@@ -118,6 +121,26 @@ export default function FamilyContactStep({ data, onComplete, onBack, isSubmitti
         />
         {errors.family_email && (
           <p className="mt-1 text-sm text-red-600">{errors.family_email.message}</p>
+        )}
+      </div>
+
+      {/* Password */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Contraseña para el Familiar *
+        </label>
+        <p className="text-xs text-gray-500 mb-2">
+          Se creará una cuenta con este email y contraseña para que el familiar pueda acceder a la plataforma.
+        </p>
+        <input
+          {...register('family_password')}
+          type="password"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          placeholder="Mínimo 6 caracteres"
+          minLength={6}
+        />
+        {errors.family_password && (
+          <p className="mt-1 text-sm text-red-600">{errors.family_password.message}</p>
         )}
       </div>
 

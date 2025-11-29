@@ -27,7 +27,12 @@ export default function RegisterPage() {
 
     try {
       await signUpWithEmail(email, password, role, displayName);
-      router.push("/onboarding");
+      // Redirect based on role
+      if (role === "senior" || role === "family") {
+        router.push("/onboarding/senior");
+      } else {
+        router.push("/onboarding");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to register");
     } finally {

@@ -198,6 +198,7 @@ export interface SeniorProfile {
   family_relationship: string;
   family_phone: string;
   family_email: string;
+  family_password?: string; // Password for creating family account (temporary, should be used immediately)
   
   // System
   onboardingCompleted: boolean;

@@ -24,6 +24,10 @@ export default function OnboardingPage() {
       if (userData.role === "caregiver") {
         // Show the form - it will handle checking if profile exists
         return;
+      } else if (userData.role === "senior" || userData.role === "family") {
+        // Redirect to senior onboarding
+        router.push("/onboarding/senior");
+        return;
       } else {
         router.push("/dashboard");
       }
@@ -37,8 +41,13 @@ export default function OnboardingPage() {
     setLoading(true);
     try {
       await updateUserRole(user.uid, role);
-      // If caregiver, the form will be shown (component will re-render)
-      if (role !== "caregiver") {
+      // Redirect based on role
+      if (role === "senior" || role === "family") {
+        router.push("/onboarding/senior");
+      } else if (role === "caregiver") {
+        // Form will be shown (component will re-render)
+        return;
+      } else {
         router.push("/dashboard");
       }
     } catch (error) {
@@ -63,7 +72,7 @@ export default function OnboardingPage() {
 
   // If user has senior or family role, redirect to senior onboarding
   if (userData?.role === "senior" || userData?.role === "family") {
-    router.push("/onboarding/senior");
+    router.push("");
     return null;
   }
 

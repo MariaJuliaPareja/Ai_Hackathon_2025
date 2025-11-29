@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase/config';
+import { signUpWithEmail } from '@/lib/firebase/auth';
 import BasicInfoStep from './components/BasicInfoStep';
 import MedicalProfileStep from './components/MedicalProfileStep';
 import SeniorNeedsStep from './components/SeniorNeedsStep';
@@ -33,6 +34,7 @@ interface SeniorFormData {
   family_relationship: string;
   family_phone: string;
   family_email: string;
+  family_password?: string;
   
   // Profile Photo (optional across steps)
   profilePhoto?: {
@@ -77,13 +79,34 @@ export default function SeniorOnboarding() {
       const user = auth.currentUser;
       if (!user) throw new Error('No hay usuario autenticado');
 
+      // Create family account if email and password are provided
+      let familyUserId: string | null = null;
+      if (finalData.family_email && finalData.family_password) {
+        try {
+          const familyUser = await signUpWithEmail(
+            finalData.family_email,
+            finalData.family_password,
+            'family',
+            finalData.family_name
+          );
+          familyUserId = familyUser.uid;
+        } catch (err: any) {
+          // If account already exists, that's okay - we'll just link it
+          console.warn('Error creating family account (may already exist):', err.message);
+        }
+      }
+
+      // Prepare data without password (don't store password in Firestore)
+      const { family_password, ...dataToSave } = finalData;
+
       // Save to Firestore
       await setDoc(doc(db, 'seniors', user.uid), {
-        ...finalData,
+        ...dataToSave,
         userId: user.uid,
         email: user.email,
         role: 'senior',
         onboardingCompleted: true,
+        family_userId: familyUserId, // Link to family account if created
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
