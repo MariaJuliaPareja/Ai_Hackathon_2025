@@ -9,7 +9,8 @@ export interface CaregiverData {
   personalInfo: {
     name: string;
     location: string;
-    profilePhotoBase64?: string; // Base64-encoded image string
+    profilePhotoBase64?: string; // Full size Base64-encoded image string (800x800, ~200KB)
+    profilePhotoThumbnailBase64?: string; // Thumbnail Base64-encoded image string (100x100, ~20KB)
     photoUploadedAt?: any; // Timestamp
   };
   professionalInfo: {
@@ -36,11 +37,20 @@ export async function saveCaregiverProfile(
   userId: string,
   formData: CaregiverOnboardingFormData
 ): Promise<void> {
-  // Extract Base64 photo (already compressed and encoded in the form)
-  const profilePhotoBase64: string | undefined =
-    typeof formData.personalInfo.photo === "string"
-      ? formData.personalInfo.photo
-      : undefined;
+  // Extract Base64 photos (already compressed and encoded in the form)
+  let profilePhotoBase64: string | undefined;
+  let profilePhotoThumbnailBase64: string | undefined;
+
+  if (formData.personalInfo.photo) {
+    if (typeof formData.personalInfo.photo === "string") {
+      // Legacy format: single string (use as full, generate thumbnail later if needed)
+      profilePhotoBase64 = formData.personalInfo.photo;
+    } else if (typeof formData.personalInfo.photo === "object" && formData.personalInfo.photo.full) {
+      // New format: object with full and thumbnail
+      profilePhotoBase64 = formData.personalInfo.photo.full;
+      profilePhotoThumbnailBase64 = formData.personalInfo.photo.thumbnail;
+    }
+  }
 
   // Note: Certification files still use Storage for now
   // If needed, these can also be converted to Base64 later
@@ -78,6 +88,7 @@ export async function saveCaregiverProfile(
       name: formData.personalInfo.name,
       location: formData.personalInfo.location,
       profilePhotoBase64,
+      profilePhotoThumbnailBase64,
       photoUploadedAt: profilePhotoBase64 ? serverTimestamp() : undefined,
     },
     professionalInfo: {

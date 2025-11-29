@@ -4,18 +4,39 @@ import { z } from "zod";
 export const personalInfoSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   location: z.string().min(2, "La ubicación es requerida"),
-  photo: z.string().optional().refine(
-    (val) => {
-      if (!val) return true; // Optional
-      // Validate Base64 data URL format and size (max 900KB)
-      if (!val.startsWith("data:image/")) return false;
-      const sizeKB = (val.length * 3) / 4 / 1024;
-      return sizeKB <= 900;
-    },
-    {
-      message: "La imagen debe ser un Base64 válido y menor a 900KB",
-    }
-  ),
+  photo: z.union([
+    // New format: object with full and thumbnail
+    z.object({
+      full: z.string().refine(
+        (val) => {
+          if (!val.startsWith("data:image/")) return false;
+          const sizeKB = (val.length * 3) / 4 / 1024;
+          return sizeKB <= 900;
+        },
+        { message: "La imagen completa debe ser menor a 900KB" }
+      ),
+      thumbnail: z.string().refine(
+        (val) => {
+          if (!val.startsWith("data:image/")) return false;
+          const sizeKB = (val.length * 3) / 4 / 1024;
+          return sizeKB <= 50; // Thumbnail should be small
+        },
+        { message: "La miniatura debe ser menor a 50KB" }
+      ),
+    }),
+    // Legacy format: single string (for backward compatibility)
+    z.string().optional().refine(
+      (val) => {
+        if (!val) return true; // Optional
+        if (!val.startsWith("data:image/")) return false;
+        const sizeKB = (val.length * 3) / 4 / 1024;
+        return sizeKB <= 900;
+      },
+      {
+        message: "La imagen debe ser un Base64 válido y menor a 900KB",
+      }
+    ),
+  ]).optional(),
 });
 
 // Step 2: Professional Info

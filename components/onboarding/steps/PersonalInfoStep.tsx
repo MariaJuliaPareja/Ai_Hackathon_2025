@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, X, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { compressAndEncodeImage } from "@/lib/utils/image-compression";
+import { compressAndEncodeImageWithThumbnail } from "@/lib/utils/image-compression";
 
 export default function PersonalInfoStep() {
   const {
@@ -18,7 +18,7 @@ export default function PersonalInfoStep() {
     setValue,
   } = useFormContext<CaregiverOnboardingFormData>();
 
-  const photoBase64 = watch("personalInfo.photo");
+  const photoData = watch("personalInfo.photo");
   const [preview, setPreview] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,9 +31,11 @@ export default function PersonalInfoStep() {
     setIsCompressing(true);
 
     try {
-      const base64 = await compressAndEncodeImage(file);
-      setValue("personalInfo.photo", base64);
-      setPreview(base64);
+      // Generate both full and thumbnail versions
+      const { full, thumbnail } = await compressAndEncodeImageWithThumbnail(file);
+      // Store as object with both versions
+      setValue("personalInfo.photo", { full, thumbnail });
+      setPreview(full); // Show full size in preview
     } catch (err: any) {
       setError(err.message || "Error al procesar la imagen");
       setValue("personalInfo.photo", undefined);
@@ -62,7 +64,9 @@ export default function PersonalInfoStep() {
   };
 
   // Show preview from form value if available
-  const displayPreview = preview || (photoBase64 && typeof photoBase64 === "string" ? photoBase64 : null);
+  const displayPreview = preview || 
+    (photoData && typeof photoData === "object" && photoData.full ? photoData.full : null) ||
+    (photoData && typeof photoData === "string" ? photoData : null);
 
   return (
     <div className="space-y-6">

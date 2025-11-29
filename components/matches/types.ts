@@ -24,7 +24,8 @@ export interface Match {
 
 export interface CaregiverData {
   name: string;
-  profilePhotoBase64?: string; // Base64-encoded image string
+  profilePhotoBase64?: string; // Full size Base64-encoded image string (loaded on-demand)
+  profilePhotoThumbnailBase64?: string; // Thumbnail Base64-encoded image string (for list views)
   location: string;
   specializations: string[];
   yearsOfExperience: number;

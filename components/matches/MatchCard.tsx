@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Clock, Award, Sparkles } from "lucide-react";
 import { Match, CaregiverData } from "./types";
+import { useState, useEffect } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
 
 interface MatchCardProps {
   match: Match;
@@ -18,18 +21,64 @@ export default function MatchCard({
   matchingFactors,
 }: MatchCardProps) {
   const matchScore = Math.round(match.similarity * 100);
+  const [displayPhoto, setDisplayPhoto] = useState<string | undefined>(
+    caregiver.profilePhotoThumbnailBase64 || caregiver.profilePhotoBase64
+  );
+  const [isLoadingFullPhoto, setIsLoadingFullPhoto] = useState(false);
+
+  // Lazy load full photo when card is visible/interacted with
+  useEffect(() => {
+    // If we only have thumbnail, load full photo on-demand
+    if (caregiver.profilePhotoThumbnailBase64 && !caregiver.profilePhotoBase64) {
+      // Load full photo when component mounts (or on hover/interaction)
+      const loadFullPhoto = async () => {
+        setIsLoadingFullPhoto(true);
+        try {
+          const caregiverRef = doc(db, "caregivers", match.caregiver_id);
+          const caregiverSnap = await getDoc(caregiverRef);
+          if (caregiverSnap.exists()) {
+            const data = caregiverSnap.data();
+            const fullPhoto = data.personalInfo?.profilePhotoBase64;
+            if (fullPhoto) {
+              setDisplayPhoto(fullPhoto);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading full photo:", error);
+        } finally {
+          setIsLoadingFullPhoto(false);
+        }
+      };
+
+      // Load after a short delay to prioritize thumbnail display
+      const timer = setTimeout(loadFullPhoto, 100);
+      return () => clearTimeout(timer);
+    } else if (caregiver.profilePhotoBase64) {
+      // Full photo already available
+      setDisplayPhoto(caregiver.profilePhotoBase64);
+    }
+  }, [caregiver, match.caregiver_id]);
 
   return (
     <Card className="overflow-hidden shadow-2xl">
       <div className="relative">
         {/* Photo */}
         <div className="relative h-96 bg-gradient-to-br from-blue-400 to-indigo-600">
-          {caregiver.profilePhotoBase64 ? (
-            <img
-              src={caregiver.profilePhotoBase64}
-              alt={`Foto de perfil de ${caregiver.name}`}
-              className="w-full h-full object-cover"
-            />
+          {displayPhoto ? (
+            <>
+              <img
+                src={displayPhoto}
+                alt={`Foto de perfil de ${caregiver.name}`}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                  isLoadingFullPhoto ? "opacity-50" : "opacity-100"
+                }`}
+              />
+              {isLoadingFullPhoto && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gray-200">
               <span className="text-6xl text-gray-400">

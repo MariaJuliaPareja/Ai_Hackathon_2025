@@ -85,6 +85,7 @@ export default function MatchesScreen() {
         }
 
         try {
+          // Use select() to exclude full photo from initial fetch (lazy loading optimization)
           const caregiverRef = doc(db, "caregivers", match.caregiver_id);
           const caregiverSnap = await getDoc(caregiverRef);
 
@@ -94,7 +95,9 @@ export default function MatchesScreen() {
               const newMap = new Map(prev);
               newMap.set(match.caregiver_id, {
                 name: data.personalInfo?.name || "Caregiver",
-                profilePhotoBase64: data.personalInfo?.profilePhotoBase64,
+                // Use thumbnail for list view, full photo loaded on-demand
+                profilePhotoThumbnailBase64: data.personalInfo?.profilePhotoThumbnailBase64,
+                profilePhotoBase64: data.personalInfo?.profilePhotoBase64, // Will be loaded on-demand
                 location: data.personalInfo?.location || "",
                 specializations: data.professionalInfo?.specializations || [],
                 yearsOfExperience: data.professionalInfo?.yearsOfExperience || 0,
