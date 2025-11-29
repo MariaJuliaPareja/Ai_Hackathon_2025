@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import CaregiverOnboardingForm from "@/components/onboarding/CaregiverOnboardingForm";
 
 export default function OnboardingPage() {
   const [role, setRole] = useState<UserRole>("caregiver");
@@ -19,7 +20,13 @@ export default function OnboardingPage() {
     if (!authLoading && !user) {
       router.push("/login");
     } else if (!authLoading && user && userData?.role) {
-      router.push("/dashboard");
+      // If caregiver, show the detailed onboarding form
+      if (userData.role === "caregiver") {
+        // Show the form - it will handle checking if profile exists
+        return;
+      } else {
+        router.push("/dashboard");
+      }
     }
   }, [user, userData, authLoading, router]);
 
@@ -30,7 +37,10 @@ export default function OnboardingPage() {
     setLoading(true);
     try {
       await updateUserRole(user.uid, role);
-      router.push("/dashboard");
+      // If caregiver, the form will be shown (component will re-render)
+      if (role !== "caregiver") {
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error("Error updating role:", error);
     } finally {
@@ -41,37 +51,42 @@ export default function OnboardingPage() {
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p>Loading...</p>
+        <p>Cargando...</p>
       </div>
     );
+  }
+
+  // If user has caregiver role, show the detailed onboarding form
+  if (userData?.role === "caregiver") {
+    return <CaregiverOnboardingForm />;
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Complete Your Profile</CardTitle>
+          <CardTitle>Completa tu Perfil</CardTitle>
           <CardDescription>
-            Please select your role to get started
+            Por favor selecciona tu rol para comenzar
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="role">I am a</Label>
+              <Label htmlFor="role">Soy un/a</Label>
               <Select
                 id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserRole)}
                 required
               >
-                <option value="caregiver">Caregiver</option>
-                <option value="senior">Senior</option>
-                <option value="family">Family Member</option>
+                <option value="caregiver">Cuidador</option>
+                <option value="senior">Adulto Mayor</option>
+                <option value="family">Familiar</option>
               </Select>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Saving..." : "Continue"}
+              {loading ? "Guardando..." : "Continuar"}
             </Button>
           </form>
         </CardContent>
@@ -79,4 +94,3 @@ export default function OnboardingPage() {
     </div>
   );
 }
-
