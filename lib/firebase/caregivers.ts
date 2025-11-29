@@ -1,14 +1,16 @@
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db, storage } from "./config";
+import { db } from "./config";
 import { CaregiverOnboardingFormData } from "@/lib/schemas/caregiver-onboarding";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { generateCaregiverEmbedding, constructCaregiverDescription } from "./embeddings";
+// NOTE: Storage removed - profile photos are stored as Base64 strings in Firestore
+// Certification files still use Storage (if needed, can be converted later)
 
 export interface CaregiverData {
   personalInfo: {
     name: string;
     location: string;
-    photoUrl?: string;
+    profilePhotoBase64?: string; // Base64-encoded image string
+    photoUploadedAt?: any; // Timestamp
   };
   professionalInfo: {
     yearsOfExperience: number;
@@ -34,27 +36,21 @@ export async function saveCaregiverProfile(
   userId: string,
   formData: CaregiverOnboardingFormData
 ): Promise<void> {
-  let photoUrl: string | undefined;
+  // Extract Base64 photo (already compressed and encoded in the form)
+  const profilePhotoBase64: string | undefined =
+    typeof formData.personalInfo.photo === "string"
+      ? formData.personalInfo.photo
+      : undefined;
 
-  // Upload photo if provided
-  if (formData.personalInfo.photo instanceof File) {
-    const photoRef = ref(storage, `caregivers/${userId}/photo`);
-    await uploadBytes(photoRef, formData.personalInfo.photo);
-    photoUrl = await getDownloadURL(photoRef);
-  } else if (typeof formData.personalInfo.photo === "string") {
-    photoUrl = formData.personalInfo.photo;
-  }
-
-  // Upload certification files
+  // Note: Certification files still use Storage for now
+  // If needed, these can also be converted to Base64 later
   const certificationsWithUrls: Array<{ name: string; fileUrl?: string }> = [];
   if (formData.professionalInfo.certifications) {
     for (const cert of formData.professionalInfo.certifications) {
+      // For now, certifications still use file URLs
+      // In the future, these could also be Base64
       let fileUrl: string | undefined;
-      if (cert.file instanceof File) {
-        const certRef = ref(storage, `caregivers/${userId}/certifications/${cert.name}`);
-        await uploadBytes(certRef, cert.file);
-        fileUrl = await getDownloadURL(certRef);
-      } else if (typeof cert.file === "string") {
+      if (typeof cert.file === "string") {
         fileUrl = cert.file;
       }
       certificationsWithUrls.push({
@@ -81,7 +77,8 @@ export async function saveCaregiverProfile(
     personalInfo: {
       name: formData.personalInfo.name,
       location: formData.personalInfo.location,
-      photoUrl,
+      profilePhotoBase64,
+      photoUploadedAt: profilePhotoBase64 ? serverTimestamp() : undefined,
     },
     professionalInfo: {
       yearsOfExperience: formData.professionalInfo.yearsOfExperience,

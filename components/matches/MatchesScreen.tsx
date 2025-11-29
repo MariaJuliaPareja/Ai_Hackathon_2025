@@ -94,7 +94,7 @@ export default function MatchesScreen() {
               const newMap = new Map(prev);
               newMap.set(match.caregiver_id, {
                 name: data.personalInfo?.name || "Caregiver",
-                photoUrl: data.personalInfo?.photoUrl,
+                profilePhotoBase64: data.personalInfo?.profilePhotoBase64,
                 location: data.personalInfo?.location || "",
                 specializations: data.professionalInfo?.specializations || [],
                 yearsOfExperience: data.professionalInfo?.yearsOfExperience || 0,

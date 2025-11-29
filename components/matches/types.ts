@@ -16,7 +16,7 @@ export interface Match {
   };
   metadata?: {
     name?: string;
-    photoUrl?: string;
+    profilePhotoBase64?: string; // Base64-encoded image
     location?: string;
     specializations?: string[];
   };
@@ -24,7 +24,7 @@ export interface Match {
 
 export interface CaregiverData {
   name: string;
-  photoUrl?: string;
+  profilePhotoBase64?: string; // Base64-encoded image string
   location: string;
   specializations: string[];
   yearsOfExperience: number;

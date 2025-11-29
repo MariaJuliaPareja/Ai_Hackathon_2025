@@ -24,10 +24,10 @@ export default function MatchCard({
       <div className="relative">
         {/* Photo */}
         <div className="relative h-96 bg-gradient-to-br from-blue-400 to-indigo-600">
-          {caregiver.photoUrl ? (
+          {caregiver.profilePhotoBase64 ? (
             <img
-              src={caregiver.photoUrl}
-              alt={caregiver.name}
+              src={caregiver.profilePhotoBase64}
+              alt={`Foto de perfil de ${caregiver.name}`}
               className="w-full h-full object-cover"
             />
           ) : (

@@ -4,7 +4,18 @@ import { z } from "zod";
 export const personalInfoSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   location: z.string().min(2, "La ubicación es requerida"),
-  photo: z.instanceof(File).optional().or(z.string().optional()),
+  photo: z.string().optional().refine(
+    (val) => {
+      if (!val) return true; // Optional
+      // Validate Base64 data URL format and size (max 900KB)
+      if (!val.startsWith("data:image/")) return false;
+      const sizeKB = (val.length * 3) / 4 / 1024;
+      return sizeKB <= 900;
+    },
+    {
+      message: "La imagen debe ser un Base64 válido y menor a 900KB",
+    }
+  ),
 });
 
 // Step 2: Professional Info

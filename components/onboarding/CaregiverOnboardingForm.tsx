@@ -31,6 +31,7 @@ export default function CaregiverOnboardingForm() {
       personalInfo: {
         name: "",
         location: "",
+        photo: undefined, // Will be Base64 string when uploaded
       },
       professionalInfo: {
         yearsOfExperience: 0,

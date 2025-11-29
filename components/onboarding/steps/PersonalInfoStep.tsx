@@ -5,8 +5,10 @@ import { CaregiverOnboardingFormData } from "@/lib/schemas/caregiver-onboarding"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { compressAndEncodeImage } from "@/lib/utils/image-compression";
 
 export default function PersonalInfoStep() {
   const {
@@ -16,25 +18,51 @@ export default function PersonalInfoStep() {
     setValue,
   } = useFormContext<CaregiverOnboardingFormData>();
 
-  const photo = watch("personalInfo.photo");
+  const photoBase64 = watch("personalInfo.photo");
   const [preview, setPreview] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setValue("personalInfo.photo", file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const onDrop = async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+
+    const file = acceptedFiles[0];
+    setError(null);
+    setIsCompressing(true);
+
+    try {
+      const base64 = await compressAndEncodeImage(file);
+      setValue("personalInfo.photo", base64);
+      setPreview(base64);
+    } catch (err: any) {
+      setError(err.message || "Error al procesar la imagen");
+      setValue("personalInfo.photo", undefined);
+      setPreview(null);
+    } finally {
+      setIsCompressing(false);
     }
   };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/png": [".png"],
+      "image/webp": [".webp"],
+    },
+    maxSize: 5 * 1024 * 1024, // 5MB
+    multiple: false,
+    disabled: isCompressing,
+  });
 
   const handleRemovePhoto = () => {
     setValue("personalInfo.photo", undefined);
     setPreview(null);
+    setError(null);
   };
+
+  // Show preview from form value if available
+  const displayPreview = preview || (photoBase64 && typeof photoBase64 === "string" ? photoBase64 : null);
 
   return (
     <div className="space-y-6">
@@ -68,7 +96,7 @@ export default function PersonalInfoStep() {
           <Input
             id="location"
             {...register("personalInfo.location")}
-            placeholder="City, State"
+            placeholder="Ciudad, Estado"
             className="bg-white"
           />
           {errors.personalInfo?.location && (
@@ -80,12 +108,13 @@ export default function PersonalInfoStep() {
 
         <div className="space-y-2">
           <Label>Foto de Perfil</Label>
-          <div className="flex items-center gap-4">
-            {preview || (photo && typeof photo === "string") ? (
+          
+          {displayPreview ? (
+            <div className="flex items-center gap-4">
               <div className="relative">
                 <img
-                  src={preview || (photo as string)}
-                  alt="Profile preview"
+                  src={displayPreview}
+                  alt="Vista previa de perfil"
                   className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
                 />
                 <Button
@@ -94,35 +123,61 @@ export default function PersonalInfoStep() {
                   size="icon"
                   className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 hover:bg-red-600 text-white"
                   onClick={handleRemovePhoto}
+                  aria-label="Eliminar foto"
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
-                <Upload className="h-8 w-8 text-gray-400" />
+              <div>
+                <div
+                  {...getRootProps()}
+                  className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  <input {...getInputProps()} />
+                  <Upload className="h-4 w-4" />
+                  <span>Cambiar Foto</span>
+                </div>
               </div>
-            )}
-            <div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                className="hidden"
-                id="photo-upload"
-              />
-              <Label
-                htmlFor="photo-upload"
-                className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                <Upload className="h-4 w-4" />
-                {preview || photo ? "Cambiar Foto" : "Subir Foto"}
-              </Label>
             </div>
-          </div>
+          ) : (
+            <div
+              {...getRootProps()}
+              className={`border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors ${
+                isDragActive
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-300 bg-gray-50 hover:border-gray-400"
+              } ${isCompressing ? "opacity-50 cursor-not-allowed" : ""}`}
+              aria-label="Zona de carga de foto de perfil"
+            >
+              <input {...getInputProps()} />
+              <div className="flex flex-col items-center justify-center gap-2">
+                {isCompressing ? (
+                  <>
+                    <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+                    <p className="text-sm text-gray-600">Procesando imagen...</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-gray-400" />
+                    <p className="text-sm text-gray-600 text-center">
+                      {isDragActive
+                        ? "Suelta la imagen aquí"
+                        : "Arrastra una foto o haz clic para seleccionar"}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      JPG, PNG o WEBP (máx. 5MB)
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <p className="text-sm text-destructive mt-2">{error}</p>
+          )}
         </div>
       </div>
     </div>
   );
 }
-

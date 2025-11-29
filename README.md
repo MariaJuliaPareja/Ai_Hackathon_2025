@@ -38,41 +38,44 @@ A Next.js 14 application with TypeScript, Shadcn/ui, and Firebase integration fo
 
 ```
 
-## Setup Instructions
+## Quick Start
 
-### 1. Install Dependencies
+For detailed setup instructions, see [SETUP_GUIDE.md](./SETUP_GUIDE.md)
 
-```bash
-npm install
-```
+### Quick Setup (5 minutes)
 
-### 2. Configure Firebase
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
-2. Enable Authentication with Email/Password and Google providers
-3. Create a Firestore database
-4. Copy your Firebase configuration
+2. **Create Firebase project**:
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Create new project
+   - Enable Authentication (Email/Password + Google)
+   - Create Firestore database
+   - Create Storage bucket
 
-### 3. Environment Variables
+3. **Configure environment**:
+   Create `.env.local` with your Firebase config:
+   ```env
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+   ```
 
-Create a `.env.local` file in the root directory:
+4. **Run development server**:
+   ```bash
+   npm run dev
+   ```
 
-```env
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-```
+5. **Open browser**:
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-### 4. Run the Development Server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+**For complete setup instructions, see [SETUP_GUIDE.md](./SETUP_GUIDE.md)**
 
 ## User Roles
 

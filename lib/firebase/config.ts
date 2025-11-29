@@ -1,7 +1,9 @@
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
-import { getStorage, FirebaseStorage } from "firebase/storage";
+// NOTE: Storage is no longer used - we store profile photos as Base64 strings directly in Firestore
+// to eliminate storage costs. See compressAndEncodeImage() in lib/utils/image-compression.ts
+// import { getStorage, FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,7 +17,8 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
-let storage: FirebaseStorage;
+// Storage removed - using Base64 inline storage instead
+// let storage: FirebaseStorage;
 
 if (typeof window !== "undefined") {
   if (!getApps().length) {
@@ -25,8 +28,9 @@ if (typeof window !== "undefined") {
   }
   auth = getAuth(app);
   db = getFirestore(app);
-  storage = getStorage(app);
+  // Storage removed - using Base64 inline storage instead
+  // storage = getStorage(app);
 }
 
-export { app, auth, db, storage };
+export { app, auth, db };
 
