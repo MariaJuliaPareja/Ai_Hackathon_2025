@@ -1,17 +1,39 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import FamilyContactModal from './FamilyContactModal';
 
 const seniorNeedsSchema = z.object({
-  routine_medication_times: z.string().min(5, 'Por favor ingrese al menos un horario de medicación'),
+  routine_medication_times: z.string().min(1, 'Por favor seleccione al menos un horario de medicación'),
   routine_assistance_tasks: z.array(z.string()).min(1, 'Seleccione al menos una tarea de asistencia'),
   care_intensity: z.enum(['light', 'moderate', 'intensive', '24_7']),
   special_requirements: z.string().optional(),
 });
+
+// Predefined medication times
+const MEDICATION_TIMES = [
+  '6:00 AM',
+  '7:00 AM',
+  '8:00 AM',
+  '9:00 AM',
+  '10:00 AM',
+  '11:00 AM',
+  '12:00 PM',
+  '1:00 PM',
+  '2:00 PM',
+  '3:00 PM',
+  '4:00 PM',
+  '5:00 PM',
+  '6:00 PM',
+  '7:00 PM',
+  '8:00 PM',
+  '9:00 PM',
+  '10:00 PM',
+  '11:00 PM',
+];
 
 type SeniorNeedsData = z.infer<typeof seniorNeedsSchema>;
 
@@ -35,7 +57,7 @@ const ASSISTANCE_TASKS = [
 ];
 
 export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting, readOnly = false }: StepProps) {
-  const [showFamilyModal, setShowFamilyModal] = useState(false);
+  const router = useRouter();
   const [familyData, setFamilyData] = useState<any>(null);
 
   const {
@@ -55,7 +77,7 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
   });
 
   const [medicationTimes, setMedicationTimes] = useState<string[]>(
-    data?.routine_medication_times?.split(', ') || ['']
+    data?.routine_medication_times?.split(', ').filter((t: string) => t.trim()) || ['']
   );
 
   const addMedicationTime = () => {
@@ -70,14 +92,30 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
     const updated = [...medicationTimes];
     updated[index] = value;
     setMedicationTimes(updated);
+    
+    // Update the form value for validation
+    const validTimes = updated.filter((t: string) => t.trim() && t !== '');
+    const joinedTimes = validTimes.join(', ');
+    // Trigger validation by setting the value
+    if (onComplete) {
+      // This will be handled in onSubmit
+    }
   };
 
   const onSubmit = (formData: SeniorNeedsData) => {
     if (readOnly || !onComplete) return;
     
+    // Filter out empty values and validate
+    const validTimes = medicationTimes.filter((t: string) => t.trim() && t !== '');
+    if (validTimes.length === 0) {
+      // Trigger validation error
+      return;
+    }
+    
+    const joinedTimes = validTimes.join(', ');
+    
     // If family data already exists, proceed directly
     if (familyData) {
-      const joinedTimes = medicationTimes.filter(t => t.trim()).join(', ');
       onComplete({
         ...formData,
         routine_medication_times: joinedTimes,
@@ -86,30 +124,19 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
       return;
     }
     
-    // Otherwise, show modal to collect family information
-    setShowFamilyModal(true);
-  };
-
-  const handleFamilyModalComplete = (familyInfo: any) => {
-    setFamilyData(familyInfo);
-    setShowFamilyModal(false);
+    // Save current step data to sessionStorage before redirecting
+    const stepData = {
+      ...formData,
+      routine_medication_times: joinedTimes,
+    };
+    sessionStorage.setItem('seniorOnboarding_step3', JSON.stringify(stepData));
+    sessionStorage.setItem('seniorOnboarding_redirect', 'true');
     
-    // Now proceed with form submission
-    if (onComplete) {
-      const joinedTimes = medicationTimes.filter(t => t.trim()).join(', ');
-      const formData = {
-        routine_medication_times: joinedTimes,
-        routine_assistance_tasks: watch('routine_assistance_tasks') || [],
-        care_intensity: watch('care_intensity') || 'moderate',
-        special_requirements: watch('special_requirements') || '',
-        ...familyInfo, // Include family data
-      };
-      onComplete(formData);
-    }
+    // Redirect to registration page for family member
+    router.push('/register?role=family&from=onboarding');
   };
 
   return (
-    <>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         Necesidades de Cuidado y Rutina Diaria
@@ -127,21 +154,29 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
           Horarios de Medicación *
         </label>
         <p className="text-xs text-gray-500 mb-3">
-          Liste los horarios en que debe tomar medicamentos (ej: 8:00 AM, 2:00 PM, 9:00 PM)
+          Seleccione los horarios en que debe tomar medicamentos. Puede agregar múltiples horarios.
         </p>
         
         <div className="space-y-2">
           {medicationTimes.map((time, index) => (
             <div key={index} className="flex gap-2">
-              <input
-                type="text"
+              <select
                 value={time}
                 onChange={(e) => updateMedicationTime(index, e.target.value)}
-                placeholder="Ej: 8:00 AM"
                 disabled={readOnly}
-                readOnly={readOnly}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-              />
+              >
+                <option value="">Seleccione un horario...</option>
+                {MEDICATION_TIMES.map((timeOption) => (
+                  <option 
+                    key={timeOption} 
+                    value={timeOption}
+                    disabled={medicationTimes.includes(timeOption) && time !== timeOption}
+                  >
+                    {timeOption}
+                  </option>
+                ))}
+              </select>
               {medicationTimes.length > 1 && !readOnly && (
                 <button
                   type="button"
@@ -165,10 +200,30 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
           </button>
         )}
         
-        <input
-          type="hidden"
-          {...register('routine_medication_times')}
-          value={medicationTimes.filter(t => t.trim()).join(', ')}
+        <Controller
+          name="routine_medication_times"
+          control={control}
+          rules={{
+            validate: () => {
+              const validTimes = medicationTimes.filter((t: string) => t.trim() && t !== '');
+              return validTimes.length > 0 || 'Por favor seleccione al menos un horario de medicación';
+            }
+          }}
+          render={({ field }) => {
+            // Sync field value with medicationTimes state
+            const validTimes = medicationTimes.filter((t: string) => t.trim() && t !== '');
+            const joinedTimes = validTimes.join(', ');
+            if (field.value !== joinedTimes) {
+              field.onChange(joinedTimes);
+            }
+            return (
+              <input
+                type="hidden"
+                {...field}
+                value={joinedTimes}
+              />
+            );
+          }}
         />
         
         {errors.routine_medication_times && (
@@ -285,14 +340,6 @@ export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting
         </div>
       )}
     </form>
-    
-    {/* Family Contact Modal */}
-    <FamilyContactModal
-      isOpen={showFamilyModal}
-      onClose={() => setShowFamilyModal(false)}
-      onComplete={handleFamilyModalComplete}
-    />
-  </>
   );
 }
 

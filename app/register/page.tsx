@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signUpWithEmail, signInWithGoogle, getUserData, UserRole } from "@/lib/firebase/auth";
 import { getRedirectPath } from "@/lib/firebase/redirect";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,28 @@ import { Select } from "@/components/ui/select";
 import Link from "next/link";
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<UserRole>("caregiver");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [isFromOnboarding, setIsFromOnboarding] = useState(false);
+
+  // Check if coming from onboarding
+  useEffect(() => {
+    const roleParam = searchParams.get('role');
+    const fromParam = searchParams.get('from');
+    
+    if (roleParam === 'family' && fromParam === 'onboarding') {
+      setRole('family');
+      setIsFromOnboarding(true);
+    } else if (roleParam) {
+      setRole(roleParam as UserRole);
+    }
+  }, [searchParams]);
 
   const handleEmailRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,12 +41,24 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await signUpWithEmail(email, password, role, displayName);
-      // Redirect based on role
-      if (role === "senior" || role === "family") {
+      const user = await signUpWithEmail(email, password, role, displayName);
+      
+      // If coming from onboarding, save family info and redirect back
+      if (isFromOnboarding && role === 'family') {
+        // Save family user ID to sessionStorage for linking
+        sessionStorage.setItem('family_userId', user.uid);
+        sessionStorage.setItem('family_email', email);
+        sessionStorage.setItem('family_name', displayName);
+        
+        // Redirect back to senior onboarding
         router.push("/onboarding/senior");
       } else {
-        router.push("/onboarding");
+        // Normal redirect based on role
+        if (role === "senior" || role === "family") {
+          router.push("/onboarding/senior");
+        } else {
+          router.push("/onboarding");
+        }
       }
     } catch (err: any) {
       setError(err.message || "Failed to register");
@@ -61,8 +88,16 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Register</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardTitle>
+            {isFromOnboarding && role === 'family' 
+              ? 'Registrar Familiar' 
+              : 'Register'}
+          </CardTitle>
+          <CardDescription>
+            {isFromOnboarding && role === 'family' 
+              ? 'Crea una cuenta para el familiar que observará el proceso de onboarding' 
+              : 'Create a new account'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleEmailRegister} className="space-y-4">
@@ -106,11 +141,17 @@ export default function RegisterPage() {
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserRole)}
                 required
+                disabled={isFromOnboarding}
               >
                 <option value="caregiver">Caregiver</option>
                 <option value="senior">Senior</option>
                 <option value="family">Family Member</option>
               </Select>
+              {isFromOnboarding && role === 'family' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Estás registrando una cuenta para el familiar que observará el proceso de onboarding.
+                </p>
+              )}
             </div>
             {error && (
               <p className="text-sm text-destructive">{error}</p>

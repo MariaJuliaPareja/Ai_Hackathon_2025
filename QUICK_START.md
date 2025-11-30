@@ -64,6 +64,10 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
 NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef
+
+# Anthropic Claude API (for ML-powered caregiver matching)
+# Get your API key from: https://console.anthropic.com/
+NEXT_PUBLIC_ANTHROPIC_API_KEY=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
 ```
 
 ### Step 6: Set Firestore Rules (Temporary - Development Only)

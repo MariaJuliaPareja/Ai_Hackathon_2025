@@ -1,8 +1,13 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase/config';
+
 interface StepProps {
   data: any;
-  onComplete: (data: any) => void;
+  onComplete?: (data: any) => void;
   onBack?: () => void;
   isSubmitting?: boolean;
 }
@@ -40,8 +45,56 @@ const CARE_INTENSITY_LABELS: Record<string, string> = {
 };
 
 export default function ReviewStep({ data, onComplete, onBack, isSubmitting }: StepProps) {
+  const router = useRouter();
+  const [isSubmittingFinal, setIsSubmittingFinal] = useState(false);
+  const [error, setError] = useState<string>('');
+
+  const handleFinalSubmit = async () => {
+    setIsSubmittingFinal(true);
+    setError('');
+
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No hay usuario autenticado');
+
+      // Family account should already be created in FamilyContactStep
+      const familyUserId = data?.family_userId || null;
+
+      // Prepare data without password (don't store password in Firestore)
+      const { family_password, family_userId: _, ...dataToSave } = data;
+
+      // Save to Firestore
+      await setDoc(doc(db, 'seniors', user.uid), {
+        ...dataToSave,
+        userId: user.uid,
+        email: user.email,
+        role: 'senior',
+        onboardingCompleted: true,
+        family_userId: familyUserId, // Link to family account if created
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      // Queue matching job
+      await setDoc(doc(db, 'matching_queue', user.uid), {
+        seniorId: user.uid,
+        status: 'queued',
+        createdAt: serverTimestamp(),
+      });
+
+      // Redirect to dashboard
+      router.push('/dashboard');
+      
+    } catch (err) {
+      console.error('Error saving senior profile:', err);
+      setError((err as Error).message || 'Error guardando perfil');
+      setIsSubmittingFinal(false);
+    }
+  };
+
   const handleConfirm = () => {
-    onComplete(data);
+    // Execute final submit when user confirms
+    handleFinalSubmit();
   };
 
   return (
@@ -55,9 +108,15 @@ export default function ReviewStep({ data, onComplete, onBack, isSubmitting }: S
         <div>
           <h3 className="font-semibold text-gray-900 mb-2">Información Básica</h3>
           <div className="text-sm text-gray-600 space-y-1">
-            <p><strong>Nombre:</strong> {data.name}</p>
-            <p><strong>Edad:</strong> {data.age} años</p>
-            <p><strong>Ubicación:</strong> {data.location}</p>
+            {data.name && (
+              <p><strong>Nombre:</strong> {data.name}</p>
+            )}
+            {data.age && (
+              <p><strong>Edad:</strong> {data.age} años</p>
+            )}
+            {data.location && (
+              <p><strong>Ubicación:</strong> {data.location}</p>
+            )}
             {data.gender && (
               <p><strong>Género:</strong> {data.gender === 'M' ? 'Masculino' : data.gender === 'F' ? 'Femenino' : 'Otro'}</p>
             )}
@@ -71,9 +130,15 @@ export default function ReviewStep({ data, onComplete, onBack, isSubmitting }: S
         <div className="border-t pt-4">
           <h3 className="font-semibold text-gray-900 mb-2">Perfil Médico</h3>
           <div className="text-sm text-gray-600 space-y-1">
-            <p><strong>Condiciones:</strong> {data.medical_comorbidities}</p>
-            <p><strong>Movilidad:</strong> {data.mobility_score ? MOBILITY_LABELS[data.mobility_score] : 'N/A'}</p>
-            <p><strong>Estado Cognitivo:</strong> {data.cognitive_status ? COGNITIVE_LABELS[data.cognitive_status] : 'N/A'}</p>
+            {data.medical_comorbidities && (
+              <p><strong>Condiciones:</strong> {data.medical_comorbidities}</p>
+            )}
+            {data.mobility_score && (
+              <p><strong>Movilidad:</strong> {MOBILITY_LABELS[data.mobility_score] || `Nivel ${data.mobility_score}`}</p>
+            )}
+            {data.cognitive_status && (
+              <p><strong>Estado Cognitivo:</strong> {COGNITIVE_LABELS[data.cognitive_status] || data.cognitive_status}</p>
+            )}
           </div>
         </div>
 
@@ -101,13 +166,26 @@ export default function ReviewStep({ data, onComplete, onBack, isSubmitting }: S
 
         {/* Family Contact */}
         <div className="border-t pt-4">
-          <h3 className="font-semibold text-gray-900 mb-2">Contacto Familiar</h3>
+          <h3 className="font-semibold text-gray-900 mb-2">Contacto Familiar de Emergencia</h3>
           <div className="text-sm text-gray-600 space-y-1">
-            <p><strong>Nombre:</strong> {data.family_name}</p>
-            <p><strong>Relación:</strong> {data.family_relationship}</p>
-            <p><strong>Teléfono:</strong> {data.family_phone}</p>
-            <p><strong>Email:</strong> {data.family_email}</p>
-            {data.family_password && (
+            {data.family_name && (
+              <p><strong>Nombre:</strong> {data.family_name}</p>
+            )}
+            {data.family_relationship && (
+              <p><strong>Relación:</strong> {data.family_relationship}</p>
+            )}
+            {data.family_phone && (
+              <p><strong>Teléfono:</strong> {data.family_phone}</p>
+            )}
+            {data.family_email && (
+              <p><strong>Email:</strong> {data.family_email}</p>
+            )}
+            {data.family_userId && (
+              <p className="text-green-600">
+                <strong>✓</strong> Cuenta del familiar creada exitosamente
+              </p>
+            )}
+            {!data.family_userId && data.family_password && (
               <p className="text-green-600">
                 <strong>✓</strong> Se creará una cuenta para el familiar
               </p>
@@ -124,6 +202,13 @@ export default function ReviewStep({ data, onComplete, onBack, isSubmitting }: S
         </p>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
       {/* Navigation */}
       <div className="flex gap-4">
         {onBack && (
@@ -139,13 +224,13 @@ export default function ReviewStep({ data, onComplete, onBack, isSubmitting }: S
         <button
           type="button"
           onClick={handleConfirm}
-          disabled={isSubmitting}
-          className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center"
+          disabled={isSubmitting || isSubmittingFinal}
+          className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
         >
-          {isSubmitting ? (
+          {isSubmitting || isSubmittingFinal ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-              Guardando...
+              Guardando y buscando cuidadores...
             </>
           ) : (
             'Confirmar y Buscar Cuidadores'

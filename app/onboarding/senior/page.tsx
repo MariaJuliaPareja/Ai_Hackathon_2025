@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase/config';
@@ -9,7 +9,6 @@ import BasicInfoStep from './components/BasicInfoStep';
 import MedicalProfileStep from './components/MedicalProfileStep';
 import SeniorNeedsStep from './components/SeniorNeedsStep';
 import FamilyContactStep from './components/FamilyContactStep';
-import ReviewStep from './components/ReviewStep';
 
 interface SeniorFormData {
   // Basic Info (Step 1)
@@ -49,7 +48,6 @@ const STEPS = [
   { id: 2, name: 'Perfil Médico', component: MedicalProfileStep },
   { id: 3, name: 'Necesidades de Cuidado', component: SeniorNeedsStep },
   { id: 4, name: 'Contacto Familiar', component: FamilyContactStep },
-  { id: 5, name: 'Revisar y Confirmar', component: ReviewStep },
 ];
 
 export default function SeniorOnboarding() {
@@ -63,58 +61,59 @@ export default function SeniorOnboarding() {
   // Check if user is family (read-only mode)
   const isFamilyView = userData?.role === 'family';
   const CurrentStepComponent = STEPS[currentStep - 1].component;
+  
+  // Track if user has been to step 4 (Contacto Familiar)
+  // If they have, they should be able to edit all steps
+  const [hasVisitedStep4, setHasVisitedStep4] = useState(false);
+  
+  // Update hasVisitedStep4 when reaching step 4
+  useEffect(() => {
+    if (currentStep === 4) {
+      setHasVisitedStep4(true);
+    }
+  }, [currentStep]);
+
+  // Check if returning from family registration
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const redirectFlag = sessionStorage.getItem('seniorOnboarding_redirect');
+      const step3Data = sessionStorage.getItem('seniorOnboarding_step3');
+      const familyUserId = sessionStorage.getItem('family_userId');
+      const familyEmail = sessionStorage.getItem('family_email');
+      const familyName = sessionStorage.getItem('family_name');
+
+      if (redirectFlag === 'true' && step3Data && familyUserId) {
+        // Restore step 3 data
+        const stepData = JSON.parse(step3Data);
+        setFormData(prev => ({
+          ...prev,
+          ...stepData,
+          // Add family contact info
+          family_name: familyName || '',
+          family_email: familyEmail || '',
+          family_userId: familyUserId,
+        }));
+
+        // Clear sessionStorage
+        sessionStorage.removeItem('seniorOnboarding_redirect');
+        sessionStorage.removeItem('seniorOnboarding_step3');
+        sessionStorage.removeItem('family_userId');
+        sessionStorage.removeItem('family_email');
+        sessionStorage.removeItem('family_name');
+
+        // Move to step 4 (Family Contact)
+        setCurrentStep(4);
+      }
+    }
+  }, []);
 
   const handleStepComplete = (stepData: Partial<SeniorFormData>) => {
     const updatedData = { ...formData, ...stepData };
     setFormData(updatedData);
     
+    // Always advance to next step (now we have 6 steps, so step 5 goes to step 6)
     if (currentStep < STEPS.length) {
       setCurrentStep(currentStep + 1);
-    } else {
-      handleFinalSubmit(updatedData);
-    }
-  };
-
-  const handleFinalSubmit = async (finalData: Partial<SeniorFormData>) => {
-    setIsSubmitting(true);
-    setError('');
-
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('No hay usuario autenticado');
-
-      // Family account should already be created in FamilyContactStep
-      // Just use the family_userId if provided
-      const familyUserId = finalData.family_userId || null;
-
-      // Prepare data without password (don't store password in Firestore)
-      const { family_password, family_userId: _, ...dataToSave } = finalData;
-
-      // Save to Firestore
-      await setDoc(doc(db, 'seniors', user.uid), {
-        ...dataToSave,
-        userId: user.uid,
-        email: user.email,
-        role: 'senior',
-        onboardingCompleted: true,
-        family_userId: familyUserId, // Link to family account if created
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-
-      // Queue matching job
-      await setDoc(doc(db, 'matching_queue', user.uid), {
-        seniorId: user.uid,
-        status: 'queued',
-        createdAt: serverTimestamp(),
-      });
-
-      router.push('/dashboard/senior');
-      
-    } catch (err) {
-      console.error('Error saving senior profile:', err);
-      setError((err as Error).message || 'Error guardando perfil');
-      setIsSubmitting(false);
     }
   };
 
@@ -168,7 +167,7 @@ export default function SeniorOnboarding() {
 
         {/* Current Step */}
         <div className="bg-white rounded-lg shadow-md p-8">
-          {isFamilyView && (
+          {isFamilyView && currentStep !== 4 && !hasVisitedStep4 && (
             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
                 <strong>Modo de solo lectura:</strong> Como familiar, puedes observar el proceso de onboarding pero no puedes editarlo.
@@ -177,10 +176,10 @@ export default function SeniorOnboarding() {
           )}
           <CurrentStepComponent
             data={formData}
-            onComplete={isFamilyView ? () => {} : handleStepComplete}
-            onBack={isFamilyView ? undefined : (currentStep > 1 ? handleBack : undefined)}
+            onComplete={isFamilyView && currentStep !== 4 && !hasVisitedStep4 ? () => {} : handleStepComplete}
+            onBack={isFamilyView && currentStep !== 4 && !hasVisitedStep4 ? undefined : (currentStep > 1 ? handleBack : undefined)}
             isSubmitting={isSubmitting}
-            readOnly={isFamilyView}
+            readOnly={isFamilyView && currentStep !== 4 && !hasVisitedStep4}
           />
           
           {error && (
