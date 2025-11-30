@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { CaregiverMatch } from '@/lib/types/matching';
+import CaregiverChatModal from './CaregiverChatModal';
 
 interface Props {
   match: CaregiverMatch;
@@ -13,8 +14,14 @@ interface Props {
 export default function MatchCard({ match, seniorId }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [status, setStatus] = useState(match.status);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
-  const handleInterest = async () => {
+  const handleInterest = () => {
+    // Open chat modal instead of directly marking as interested
+    setIsChatOpen(true);
+  };
+
+  const handleRequestInterview = async () => {
     setStatus('interested');
     await updateDoc(
       doc(db, 'seniors', seniorId, 'matches', match.caregiverId),
@@ -240,6 +247,14 @@ export default function MatchCard({ match, seniorId }: Props) {
           </div>
         )}
       </div>
+
+      {/* Chat Modal */}
+      <CaregiverChatModal
+        match={match}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        onRequestInterview={handleRequestInterview}
+      />
     </div>
   );
 }
