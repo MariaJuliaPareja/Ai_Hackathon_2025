@@ -21,8 +21,9 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isFromOnboarding, setIsFromOnboarding] = useState(false);
+  const [isFromLanding, setIsFromLanding] = useState(false);
 
-  // Check if coming from onboarding
+  // Check if coming from onboarding or landing page
   useEffect(() => {
     const roleParam = searchParams.get('role');
     const fromParam = searchParams.get('from');
@@ -30,6 +31,10 @@ export default function RegisterPage() {
     if (roleParam === 'family' && fromParam === 'onboarding') {
       setRole('family');
       setIsFromOnboarding(true);
+    } else if (roleParam === 'caregiver' || roleParam === 'senior') {
+      // Pre-select role from landing page
+      setRole(roleParam as UserRole);
+      setIsFromLanding(true);
     } else if (roleParam) {
       setRole(roleParam as UserRole);
     }
@@ -91,43 +96,52 @@ export default function RegisterPage() {
           <CardTitle>
             {isFromOnboarding && role === 'family' 
               ? 'Registrar Familiar' 
-              : 'Register'}
+              : isFromLanding && role === 'senior'
+              ? 'Registrarse como Adulto Mayor'
+              : isFromLanding && role === 'caregiver'
+              ? 'Registrarse como Cuidador'
+              : 'Registrarse'}
           </CardTitle>
           <CardDescription>
             {isFromOnboarding && role === 'family' 
               ? 'Crea una cuenta para el familiar que observará el proceso de onboarding' 
-              : 'Create a new account'}
+              : isFromLanding && role === 'senior'
+              ? 'Crea tu cuenta para encontrar el cuidador perfecto'
+              : isFromLanding && role === 'caregiver'
+              ? 'Crea tu perfil profesional y comienza a recibir oportunidades'
+              : 'Crea una nueva cuenta'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleEmailRegister} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
+              <Label htmlFor="displayName">Nombre Completo</Label>
               <Input
                 id="displayName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Juan Pérez"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Correo Electrónico</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="tu@ejemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
                 type="password"
+                placeholder="Mínimo 6 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -135,21 +149,30 @@ export default function RegisterPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="role">I am a</Label>
+              <Label htmlFor="role">Soy</Label>
               <Select
                 id="role"
                 value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
+                onChange={(e) => {
+                  setRole(e.target.value as UserRole);
+                  setIsFromLanding(false);
+                }}
                 required
-                disabled={isFromOnboarding}
+                disabled={isFromOnboarding || isFromLanding}
+                className={isFromLanding ? "bg-gray-50" : ""}
               >
-                <option value="caregiver">Caregiver</option>
-                <option value="senior">Senior</option>
-                <option value="family">Family Member</option>
+                <option value="caregiver">Cuidador</option>
+                <option value="senior">Adulto Mayor</option>
+                <option value="family">Familiar</option>
               </Select>
               {isFromOnboarding && role === 'family' && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-blue-600 mt-1">
                   Estás registrando una cuenta para el familiar que observará el proceso de onboarding.
+                </p>
+              )}
+              {isFromLanding && (
+                <p className="text-xs text-blue-600 mt-1">
+                  Rol preseleccionado desde la página principal. Puedes cambiarlo si es necesario.
                 </p>
               )}
             </div>
@@ -157,7 +180,7 @@ export default function RegisterPage() {
               <p className="text-sm text-destructive">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Register"}
+              {loading ? "Creando cuenta..." : "Registrarse"}
             </Button>
           </form>
           <div className="mt-4">
@@ -167,7 +190,7 @@ export default function RegisterPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
+                  O continúa con
                 </span>
               </div>
             </div>
@@ -178,13 +201,13 @@ export default function RegisterPage() {
               onClick={handleGoogleRegister}
               disabled={loading}
             >
-              Sign up with Google
+              Registrarse con Google
             </Button>
           </div>
           <p className="text-center text-sm mt-4">
-            Already have an account?{" "}
+            ¿Ya tienes una cuenta?{" "}
             <Link href="/login" className="text-primary hover:underline">
-              Login
+              Iniciar Sesión
             </Link>
           </p>
         </CardContent>

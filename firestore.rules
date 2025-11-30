@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Caregivers can read/write their own profile
+    match /caregivers/{caregiverId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == caregiverId;
+      
+      // Questionnaire results subcollection
+      match /questionnaire_results/{resultId} {
+        allow read, write: if request.auth != null && request.auth.uid == caregiverId;
+      }
+      
+      // Certificates subcollection
+      match /certificates/{certId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == caregiverId;
+      }
+    }
+    
+    // Seniors can read/write their own data
+    match /seniors/{seniorId} {
+      allow read, write: if request.auth != null && request.auth.uid == seniorId;
+      
+      // Matches subcollection
+      match /matches/{matchId} {
+        allow read, write: if request.auth != null && request.auth.uid == seniorId;
+      }
+    }
+    
+    // Matching queue
+    match /matching_queue/{queueId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Job applications
+    match /job_applications/{applicationId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Interests
+    match /interests/{interestId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Matches
+    match /matches/{matchId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Config
+    match /config/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if false; // Only Cloud Functions can write
+    }
+  }
+}
+

@@ -121,6 +121,17 @@ service cloud.firestore {
     match /caregivers/{caregiverId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == caregiverId;
+      
+      // Questionnaire results subcollection
+      match /questionnaire_results/{resultId} {
+        allow read, write: if request.auth != null && request.auth.uid == caregiverId;
+      }
+      
+      // Certificates subcollection
+      match /certificates/{certId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == caregiverId;
+      }
     }
     
     // Seniors can read/write their own data
@@ -135,6 +146,11 @@ service cloud.firestore {
     
     // Matching queue
     match /matching_queue/{queueId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Job applications
+    match /job_applications/{applicationId} {
       allow read, write: if request.auth != null;
     }
     

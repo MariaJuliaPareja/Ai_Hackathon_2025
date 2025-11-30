@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmail, signInWithGoogle, getUserData } from "@/lib/firebase/auth";
 import { getRedirectPath } from "@/lib/firebase/redirect";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Link from "next/link";
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +30,7 @@ export default function LoginPage() {
       const redirectPath = getRedirectPath(userData?.role);
       router.push(redirectPath);
     } catch (err: any) {
-      setError(err.message || "Failed to sign in");
+      setError(err.message || "Error al iniciar sesión");
     } finally {
       setLoading(false);
     }
@@ -46,7 +47,7 @@ export default function LoginPage() {
       const redirectPath = getRedirectPath(userData?.role);
       router.push(redirectPath);
     } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
+      setError(err.message || "Error al iniciar sesión con Google");
     } finally {
       setLoading(false);
     }
@@ -56,27 +57,28 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Login</CardTitle>
-          <CardDescription>Sign in to your account</CardDescription>
+          <CardTitle>Iniciar Sesión</CardTitle>
+          <CardDescription>Accede a tu cuenta</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Correo Electrónico</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="tu@ejemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
                 type="password"
+                placeholder="Ingresa tu contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -86,7 +88,7 @@ export default function LoginPage() {
               <p className="text-sm text-destructive">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </Button>
           </form>
           <div className="mt-4">
@@ -96,7 +98,7 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
+                  O continúa con
                 </span>
               </div>
             </div>
@@ -107,13 +109,16 @@ export default function LoginPage() {
               onClick={handleGoogleLogin}
               disabled={loading}
             >
-              Sign in with Google
+              Iniciar sesión con Google
             </Button>
           </div>
           <p className="text-center text-sm mt-4">
-            Don't have an account?{" "}
-            <Link href="/register" className="text-primary hover:underline">
-              Register
+            ¿No tienes una cuenta?{" "}
+            <Link 
+              href={searchParams.get('role') ? `/register?role=${searchParams.get('role')}` : '/register'} 
+              className="text-primary hover:underline"
+            >
+              Regístrate
             </Link>
           </p>
         </CardContent>
