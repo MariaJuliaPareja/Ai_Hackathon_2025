@@ -16,25 +16,24 @@ npm run seed:caregivers -- path/to/custom.csv
 
 ### Prerequisites
 
-1. **Firebase Admin Setup**: You need Firebase Admin credentials to write to Firestore.
+1. **Firebase Configuration**: The script uses the same Firebase Web SDK as your Next.js app.
 
-   **Option A: Service Account JSON** (Recommended)
+   **Required Environment Variables** (in `.env.local`):
    ```bash
-   # Download service account JSON from Firebase Console
-   # Project Settings > Service Accounts > Generate New Private Key
-   export GOOGLE_APPLICATION_CREDENTIALS="./path/to/serviceAccountKey.json"
-   ```
-
-   **Option B: Environment Variables**
-   ```bash
-   # Add to .env.local
+   NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
    NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
    ```
 
-   **Option C: Firebase Emulator** (For local development)
-   ```bash
-   export FIRESTORE_EMULATOR_HOST=localhost:8080
-   ```
+   The script automatically loads `.env.local` using `dotenv` and uses the Firebase config from `lib/firebase/config.ts`.
+
+   **Alternative**: If you prefer a simpler approach (no API key needed), you can use `firebase-admin` SDK instead:
+   - Only needs `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+   - No API key required for server-side writes
+   - See comment in `seedCaregiversFromCSV.ts` for implementation
 
 2. **CSV File Format**: The script expects `cuidador_processed.csv` in the project root with these columns:
    - `user_code`: Document ID in Firestore
@@ -95,14 +94,20 @@ The script will:
 
 ### Troubleshooting
 
-**Error: "Firebase Admin not initialized"**
-- Make sure you have set up credentials (see Prerequisites)
+**Error: "Firebase not initialized"**
+- Make sure `.env.local` has all `NEXT_PUBLIC_FIREBASE_*` variables set
+- See `QUICK_START.md` for Firebase setup instructions
 
 **Error: "CSV file not found"**
 - Ensure `cuidador_processed.csv` is in the project root
 - Or provide full path: `npm run seed:caregivers -- /full/path/to/file.csv`
 
 **Error: "Permission denied"**
-- Check that your service account has Firestore write permissions
-- Verify project ID matches your Firebase project
+- Check your Firestore security rules allow writes to `/caregivers` collection
+- For development, you can temporarily allow writes:
+  ```javascript
+  match /caregivers/{document=**} {
+    allow read, write: if true;
+  }
+  ```
 

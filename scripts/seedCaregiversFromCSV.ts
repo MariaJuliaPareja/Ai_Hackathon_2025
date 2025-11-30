@@ -5,55 +5,54 @@
  * 
  * This script reads cuidador_processed.csv and uploads each row to Firestore
  * collection 'caregivers' with document ID = user_code
+ * 
+ * Uses Firebase Web SDK (same as Next.js app) - requires .env.local with Firebase config
+ * 
+ * NOTE: Alternative approach using firebase-admin SDK (simpler, no API key needed):
+ *   - Change imports to: import { initializeApp } from 'firebase-admin/app'; import { getFirestore } from 'firebase-admin/firestore';
+ *   - Initialize with: initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID });
+ *   - Use: db.collection('caregivers').doc(userCode).set(firestoreDoc);
  */
 
-import * as fs from 'fs';
+// Load environment variables from .env.local
+import 'dotenv/config';
+import { config } from 'dotenv';
 import * as path from 'path';
+
+// Explicitly load .env.local (dotenv/config loads .env by default)
+config({ path: path.join(__dirname, '..', '.env.local') });
+
+import * as fs from 'fs';
 import { parse } from 'papaparse';
-import { initializeApp, cert } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-// Initialize Firebase Admin (for server-side access)
-// Supports multiple initialization methods:
-// 1. Service account JSON file (GOOGLE_APPLICATION_CREDENTIALS)
-// 2. Environment variables (for Firebase projects)
-// 3. Default credentials (if running in Firebase environment)
-let db: FirebaseFirestore.Firestore;
+// Initialize Firebase directly in the script
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
 
-try {
-  // Method 1: Try service account file
-  const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  if (serviceAccountPath && fs.existsSync(serviceAccountPath)) {
-    const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-    initializeApp({
-      credential: cert(serviceAccount),
-      projectId: serviceAccount.project_id,
-    });
-    console.log('✅ Firebase Admin initialized with service account');
-  } 
-  // Method 2: Try environment variables
-  else if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
-    initializeApp({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    });
-    console.log('✅ Firebase Admin initialized with environment variables');
-  }
-  // Method 3: Default initialization
-  else {
-    initializeApp();
-    console.log('✅ Firebase Admin initialized with default credentials');
-  }
-  
-  db = getFirestore();
-} catch (error: any) {
-  console.error('❌ Error initializing Firebase Admin:', error.message);
-  console.error('\n💡 Setup options:');
-  console.error('   1. Set GOOGLE_APPLICATION_CREDENTIALS to path of service account JSON');
-  console.error('   2. Set NEXT_PUBLIC_FIREBASE_PROJECT_ID in .env.local');
-  console.error('   3. Use Firebase emulator (set FIRESTORE_EMULATOR_HOST)');
-  console.error('\n📖 See README.md for Firebase setup instructions');
+// Initialize Firebase app (reuse if already initialized)
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// Initialize Firestore
+const db = getFirestore(app);
+
+// Verify Firebase is initialized
+if (!db) {
+  console.error('❌ Firebase not initialized');
+  console.error('💡 Make sure .env.local has all NEXT_PUBLIC_FIREBASE_* variables set');
+  console.error('📖 See QUICK_START.md for Firebase setup instructions');
   process.exit(1);
 }
+
+console.log('✅ Firebase initialized directly in seeder script');
 
 // Mapping functions for CSV fields to Firestore structure
 const CARE_SKILLS_MAP: { [key: string]: string } = {
@@ -225,8 +224,8 @@ function mapCsvRowToFirestore(row: any): any {
     // System fields
     active: true,
     onboardingCompleted: true,
-    createdAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
     
     // Additional CSV fields (for reference/debugging)
     _csvData: {
@@ -283,8 +282,8 @@ async function seedCaregivers(csvPath: string) {
     try {
       const firestoreDoc = mapCsvRowToFirestore(row);
       
-      // Upload to Firestore
-      await db.collection('caregivers').doc(userCode).set(firestoreDoc);
+      // Upload to Firestore using Web SDK
+      await setDoc(doc(db, 'caregivers', userCode), firestoreDoc);
       
       successCount++;
       console.log(`✅ [${i + 1}/${rows.length}] Uploaded: ${userCode} - ${firestoreDoc.name}`);

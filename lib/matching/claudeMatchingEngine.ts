@@ -91,9 +91,9 @@ SALUD Y MOVILIDAD:
 
 NECESIDADES DE CUIDADO:
 - Horarios de Medicación: ${senior.routine_medication_times || 'No especificado'}
-- Tareas de Asistencia Requeridas: ${senior.routine_assistance_tasks.join(', ') || 'Ninguna especificada'}
+- Tareas de Asistencia Requeridas: ${senior.routine_assistance_tasks?.join(', ') || 'Ninguna especificada'}
 - Intensidad de Cuidado: ${careIntensityMap[senior.care_intensity] || senior.care_intensity}
-${senior.special_requirements ? `- Requisitos Especiales: ${senior.special_requirements}` : ''}
+${senior.special_requirements ? '- Requisitos Especiales: ' + senior.special_requirements : ''}
 
 ═══════════════════════════════════════════════════════════════
 PERFIL DEL CUIDADOR
@@ -106,10 +106,10 @@ INFORMACIÓN PERSONAL:
 
 EXPERIENCIA Y CAPACITACIÓN:
 - Años de Experiencia: ${caregiver.yearsExperience} años
-- Habilidades: ${caregiver.skills.join(', ') || 'No especificadas'}
-- Certificaciones: ${caregiver.certifications.join(', ') || 'Ninguna'}
-- Especializaciones: ${caregiver.specializations?.join(', ') || 'Ninguna especificada'}
-${caregiver.avgRating ? `- Calificación Promedio: ${caregiver.avgRating}/5 estrellas` : ''}
+- Habilidades: ${caregiver.skills?.join(', ') || 'No especificadas'}
+- Certificaciones: ${caregiver.certifications?.join(', ') || 'Ninguna'}
+${caregiver.specializations ? '- Especializaciones: ' + (caregiver.specializations?.join(', ') || 'Ninguna especificada') : ''}
+${caregiver.avgRating ? '- Calificación Promedio: ' + caregiver.avgRating + '/5 estrellas' : ''}
 
 DESCRIPCIÓN PROFESIONAL:
 ${caregiver.bio || 'No disponible'}
@@ -305,8 +305,8 @@ function generateFallbackScore(
   // Medical compatibility (semantic similarity): check if caregiver has relevant experience
   const medicalConditions = (senior.medical_comorbidities || '').toLowerCase();
   const caregiverBioLower = caregiverBio.toLowerCase();
-  const caregiverSkillsLower = caregiverSkills.map(s => s.toLowerCase()).join(' ');
-  const caregiverSpecializationsLower = caregiverSpecializations.map(s => s.toLowerCase()).join(' ');
+  const caregiverSkillsLower = (caregiverSkills || []).map((s: string) => s.toLowerCase()).join(' ');
+  const caregiverSpecializationsLower = (caregiverSpecializations || []).map((s: string) => s.toLowerCase()).join(' ');
   const allCaregiverText = `${caregiverBioLower} ${caregiverSkillsLower} ${caregiverSpecializationsLower}`;
   
   // Check for medical condition keywords
@@ -342,7 +342,7 @@ function generateFallbackScore(
       },
     },
     reasoning: {
-      summary: `${overall >= 80 ? 'Excelente' : overall >= 60 ? 'Buen' : 'Aceptable'} match basado en ${semanticSimilarity >= 70 ? 'experiencia médica relevante' : 'perfil general'}, ${locationMatch >= 80 ? 'misma ubicación' : 'ubicación accesible'}, y ${caregiverYearsExp} años de experiencia`,
+      summary: (overall >= 80 ? 'Excelente' : overall >= 60 ? 'Buen' : 'Aceptable') + ' match basado en ' + (semanticSimilarity >= 70 ? 'experiencia médica relevante' : 'perfil general') + ', ' + (locationMatch >= 80 ? 'misma ubicación' : 'ubicación accesible') + ', y ' + caregiverYearsExp + ' años de experiencia',
       strengths: [
         `${caregiverYearsExp} años de experiencia profesional`,
         locationMatch >= 80 ? 'Misma ubicación' : locationMatch >= 60 ? 'Ubicación cercana' : 'Ubicación accesible',
@@ -355,10 +355,10 @@ function generateFallbackScore(
       ].filter(Boolean) as string[],
       compatibility_factors: {
         medical_expertise: semanticSimilarity >= 70 
-          ? `Experiencia relevante con condiciones similares. ${matches.length > 0 ? `Menciona experiencia con: ${matches.join(', ')}` : 'Experiencia general en cuidado de adultos mayores.'}`
+          ? 'Experiencia relevante con condiciones similares. ' + (matches.length > 0 ? 'Menciona experiencia con: ' + (matches?.join(', ') || 'varias condiciones') : 'Experiencia general en cuidado de adultos mayores.')
           : 'Evaluación detallada de compatibilidad médica pendiente. Se recomienda verificar experiencia específica.',
-        care_approach: `Perfil compatible basado en ${caregiverYearsExp} años de experiencia y ${caregiverSkills.length} habilidades registradas. ${caregiverBio ? 'Descripción profesional disponible.' : ''}`,
-        practical_fit: `Ubicado en ${caregiverLocation}${locationMatch >= 80 ? ' (misma ubicación)' : ''}, tarifa S/${caregiverHourlyRate}/hora${caregiverRating ? `, calificación ${caregiverRating}/5 estrellas` : ''}`,
+        care_approach: 'Perfil compatible basado en ' + caregiverYearsExp + ' años de experiencia y ' + caregiverSkills.length + ' habilidades registradas. ' + (caregiverBio ? 'Descripción profesional disponible.' : ''),
+        practical_fit: 'Ubicado en ' + caregiverLocation + (locationMatch >= 80 ? ' (misma ubicación)' : '') + ', tarifa S/' + caregiverHourlyRate + '/hora' + (caregiverRating ? ', calificación ' + caregiverRating + '/5 estrellas' : ''),
       },
     },
   };
@@ -409,8 +409,8 @@ export async function batchEvaluateMatches(
           age: caregiver.age,
           location: caregiver.location,
           yearsExperience: caregiver.yearsExperience,
-          skills: caregiver.skills,
-          certifications: caregiver.certifications,
+          skills: caregiver.skills || [],
+          certifications: caregiver.certifications || [],
           bio: caregiver.bio,
           profilePhoto: caregiver.profilePhoto,
           hourlyRate: caregiver.hourlyRate,

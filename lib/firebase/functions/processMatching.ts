@@ -27,25 +27,49 @@ export async function processMatchingForSenior(seniorId: string) {
 
     // Update progress
     await updateDoc(doc(db, 'seniors', seniorId), {
-      match_progress: 10,
+      match_progress: 20,
       match_current_step: 'Buscando cuidadores disponibles...',
       updatedAt: serverTimestamp(),
     });
 
-    // Get all active caregivers
-    let caregiversSnapshot = await getDocs(
+    console.log('🔍 Querying caregivers from Firestore...');
+
+    // Get ALL caregivers first (no filter) to debug
+    const allCaregiversSnapshot = await getDocs(collection(db, 'caregivers'));
+    console.log('📊 Total caregivers in DB:', allCaregiversSnapshot.size);
+
+    // Now try with active filter
+    const caregiversSnapshot = await getDocs(
       query(
         collection(db, 'caregivers'),
-        where('onboardingCompleted', '==', true),
         where('active', '==', true)
       )
     );
 
-    let caregivers = caregiversSnapshot.docs.map(doc => ({
-      id: doc.id,
-      userId: doc.id,
-      ...doc.data(),
-    })) as any[];
+    console.log('📊 Active caregivers found:', caregiversSnapshot.size);
+
+    let caregivers = caregiversSnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log('  ✅', doc.id, '-', data.name, '| active:', data.active);
+      return {
+        id: doc.id,
+        userId: doc.id,
+        ...data,
+      };
+    }) as any[];
+
+    console.log('📦 Caregivers array length:', caregivers.length);
+
+    // If no active caregivers, get ALL caregivers regardless
+    if (caregivers.length === 0) {
+      console.log('⚠️ No active caregivers, getting ALL caregivers...');
+      caregivers = allCaregiversSnapshot.docs.map(doc => ({
+        id: doc.id,
+        userId: doc.id,
+        ...doc.data(),
+      })) as any[];
+      console.log('📦 All caregivers length:', caregivers.length);
+    }
 
     // If no caregivers exist, create mock data for demo
     if (caregivers.length === 0) {
@@ -53,7 +77,7 @@ export async function processMatchingForSenior(seniorId: string) {
       await createMockCaregivers();
       
       // Fetch again after creating mocks
-      caregiversSnapshot = await getDocs(
+      const caregiversSnapshot2 = await getDocs(
         query(
           collection(db, 'caregivers'),
           where('onboardingCompleted', '==', true),
@@ -61,7 +85,7 @@ export async function processMatchingForSenior(seniorId: string) {
         )
       );
       
-      caregivers = caregiversSnapshot.docs.map(doc => ({
+      caregivers = caregiversSnapshot2.docs.map(doc => ({
         id: doc.id,
         userId: doc.id,
         ...doc.data(),
@@ -140,14 +164,63 @@ export async function processMatchingForSenior(seniorId: string) {
     // Save top 10 matches to subcollection
     const topMatches = matches.slice(0, 10);
 
+    console.log('💾 Saving matches to Firestore...');
     for (const match of topMatches) {
+      // Ensure all required fields are defined before saving
+      const matchData = {
+        matchId: match.matchId || `match_${Date.now()}_${match.caregiverId}`,
+        caregiverId: match.caregiverId,
+        seniorId: seniorId, // Use the parameter, not from match object
+        score: {
+          overall: match.score?.overall || 0,
+          breakdown: {
+            semantic_similarity: match.score?.breakdown?.semantic_similarity || 0,
+            skills_match: match.score?.breakdown?.skills_match || 0,
+            location_proximity: match.score?.breakdown?.location_proximity || 0,
+            availability_fit: match.score?.breakdown?.availability_fit || 0,
+            experience_level: match.score?.breakdown?.experience_level || 0,
+          },
+        },
+        mlReasoning: {
+          summary: match.mlReasoning?.summary || 'Match generado por IA',
+          strengths: match.mlReasoning?.strengths || [],
+          considerations: match.mlReasoning?.considerations || [],
+          compatibility_factors: {
+            medical_expertise: match.mlReasoning?.compatibility_factors?.medical_expertise || 'Evaluación pendiente',
+            care_approach: match.mlReasoning?.compatibility_factors?.care_approach || 'Evaluación pendiente',
+            practical_fit: match.mlReasoning?.compatibility_factors?.practical_fit || 'Evaluación pendiente',
+          },
+        },
+        caregiver: {
+          name: match.caregiver?.name || 'Nombre no disponible',
+          age: match.caregiver?.age || 0,
+          location: match.caregiver?.location || 'Ubicación no disponible',
+          yearsExperience: match.caregiver?.yearsExperience || 0,
+          skills: match.caregiver?.skills || [],
+          certifications: match.caregiver?.certifications || [],
+          bio: match.caregiver?.bio || 'Descripción no disponible',
+          profilePhoto: match.caregiver?.profilePhoto || null,
+          hourlyRate: match.caregiver?.hourlyRate || 0,
+          availability: match.caregiver?.availability || {},
+          avgRating: match.caregiver?.avgRating || null,
+          totalHours: match.caregiver?.totalHours || null,
+        },
+        status: match.status || 'pending',
+        rank: match.rank || 0,
+        createdAt: new Date().toISOString(),
+        viewedAt: null,
+      };
+
+      // Remove null/undefined values to avoid Firestore errors
+      const cleanMatchData = Object.fromEntries(
+        Object.entries(matchData).filter(([_, value]) => value !== undefined)
+      );
+
+      console.log(`  💾 Saving match ${match.rank}: ${match.caregiver?.name || match.caregiverId}`);
+      
       await setDoc(
         doc(db, 'seniors', seniorId, 'matches', match.caregiverId),
-        {
-          ...match,
-          seniorId,
-          createdAt: new Date().toISOString(),
-        }
+        cleanMatchData
       );
     }
 
