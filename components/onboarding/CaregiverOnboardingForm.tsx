@@ -129,7 +129,7 @@ export default function CaregiverOnboardingForm() {
     setIsSubmitting(true);
     try {
       await saveCaregiverProfile(user.uid, data);
-      router.push("/dashboard");
+      router.push("/questionnaire/caregiver");
     } catch (error) {
       console.error("Error saving caregiver profile:", error);
       alert("Error al guardar el perfil. Por favor, intenta de nuevo.");

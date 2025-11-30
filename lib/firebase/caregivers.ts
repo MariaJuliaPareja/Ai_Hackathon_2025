@@ -7,6 +7,23 @@ import { Certificate } from "@/lib/types/firestore";
 // Profile photos: in main document
 // Certificates: in subcollection /certificates
 
+// Remove undefined values from object (Firestore doesn't allow them)
+function removeUndefined(obj: any): any {
+  if (obj === null || obj === undefined) return null;
+  if (Array.isArray(obj)) return obj.map(removeUndefined);
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const key in obj) {
+      const value = removeUndefined(obj[key]);
+      if (value !== undefined) {
+        cleaned[key] = value;
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+}
+
 export interface CaregiverData {
   personalInfo: {
     name: string;
@@ -120,6 +137,9 @@ export async function saveCaregiverProfile(
     updatedAt: serverTimestamp(),
   };
 
+  // Clean the data - remove all undefined fields before saving
+  const cleanedData = removeUndefined(caregiverData);
+
   // Save to Firestore
-  await setDoc(doc(db, "caregivers", userId), caregiverData);
+  await setDoc(doc(db, "caregivers", userId), cleanedData);
 }

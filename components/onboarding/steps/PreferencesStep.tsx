@@ -23,6 +23,8 @@ const CONDITIONS = [
   "Cuidado Paliativo",
 ];
 
+const ALL_CONDITIONS_OPTION = "Todos";
+
 export default function PreferencesStep() {
   const {
     register,
@@ -35,16 +37,37 @@ export default function PreferencesStep() {
   const conditions = watch("preferences.conditionsComfortableWith") || [];
 
   const toggleCondition = (condition: string) => {
-    const current = conditions;
+    const current = conditions.filter((c) => c !== ALL_CONDITIONS_OPTION); // Remove "Todos" from current array
+    
+    // Handle "Todos" option
+    if (condition === ALL_CONDITIONS_OPTION) {
+      if (current.length === CONDITIONS.length) {
+        // Deselect all
+        setValue("preferences.conditionsComfortableWith", []);
+      } else {
+        // Select all conditions (without adding "Todos" to the array)
+        setValue("preferences.conditionsComfortableWith", [...CONDITIONS]);
+      }
+      return;
+    }
+    
+    // Handle regular conditions
     if (current.includes(condition)) {
-      setValue(
-        "preferences.conditionsComfortableWith",
-        current.filter((c) => c !== condition)
-      );
+      // Remove condition
+      const newConditions = current.filter((c) => c !== condition);
+      setValue("preferences.conditionsComfortableWith", newConditions);
     } else {
-      setValue("preferences.conditionsComfortableWith", [...current, condition]);
+      // Add condition
+      const newConditions = [...current, condition];
+      setValue("preferences.conditionsComfortableWith", newConditions);
     }
   };
+  
+  // Check if "Todos" should be checked (all conditions selected, excluding "Todos" from the array)
+  const isAllSelected = conditions.filter((c) => c !== ALL_CONDITIONS_OPTION).length === CONDITIONS.length;
+  
+  // Get conditions to display (exclude "Todos" from badges)
+  const displayConditions = conditions.filter((c) => c !== ALL_CONDITIONS_OPTION);
 
   return (
     <div className="space-y-6">
@@ -116,26 +139,46 @@ export default function PreferencesStep() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* "Todos" option - special styling */}
+            <div className="mb-4 pb-4 border-b">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="condition-todos"
+                  checked={isAllSelected}
+                  onCheckedChange={() => toggleCondition(ALL_CONDITIONS_OPTION)}
+                />
+                <Label
+                  htmlFor="condition-todos"
+                  className="text-sm font-semibold cursor-pointer text-purple-700"
+                >
+                  {ALL_CONDITIONS_OPTION}
+                </Label>
+              </div>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {CONDITIONS.map((condition) => (
                 <div key={condition} className="flex items-center space-x-2">
                   <Checkbox
                     id={`condition-${condition}`}
-                    checked={conditions.includes(condition)}
+                    checked={conditions.includes(condition) || isAllSelected}
                     onCheckedChange={() => toggleCondition(condition)}
+                    disabled={isAllSelected && !conditions.includes(condition)}
                   />
                   <Label
                     htmlFor={`condition-${condition}`}
-                    className="text-sm font-normal cursor-pointer"
+                    className={`text-sm font-normal cursor-pointer ${
+                      isAllSelected && !conditions.includes(condition) ? 'opacity-50' : ''
+                    }`}
                   >
                     {condition}
                   </Label>
                 </div>
               ))}
             </div>
-            {conditions.length > 0 && (
+            {displayConditions.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
-                {conditions.map((condition) => (
+                {displayConditions.map((condition) => (
                   <span
                     key={condition}
                     className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm"
