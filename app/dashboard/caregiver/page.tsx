@@ -64,10 +64,12 @@ export default function CaregiverJobBoard() {
     );
 
     const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
-      const jobsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as (SeniorProfile & { id: string })[];
+      const jobsData = (snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .filter((job: any) => job.name && job.age) as (SeniorProfile & { id: string })[]); // Filter out jobs without name or age
       setJobs(jobsData);
     });
 

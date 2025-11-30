@@ -9,6 +9,7 @@
     "lint": "next lint",
     "verify": "node verify-setup.js",
     "seed:caregivers": "tsx scripts/seedCaregiversFromCSV.ts",
+    "seed:seniors": "tsx scripts/seedSeniorsFromCSV.ts",
     "update:csv": "tsx scripts/updateCaregiverCSV.ts"
   },
   "dependencies": {
