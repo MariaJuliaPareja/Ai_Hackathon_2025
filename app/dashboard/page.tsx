@@ -9,7 +9,6 @@ import { AuthGuard } from '@/components/AuthGuard';
 import type { CaregiverMatch } from '@/lib/types/matching';
 import MatchingInProgress from './senior/components/MatchingInProgress';
 import MatchCard from './senior/components/MatchCard';
-import APIStatusBanner from './senior/components/APIStatusBanner';
 import { processMatchingForSenior } from '@/lib/firebase/functions/processMatching';
 import { logAPIKeyStatus } from '@/lib/utils/apiCheck';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -200,11 +199,16 @@ export default function DashboardPage() {
           empty: snapshot.empty,
         });
         
-        const matchesData = snapshot.docs.map(doc => ({
-          ...doc.data(),
-          matchId: doc.id,
-          createdAt: doc.data().createdAt ? new Date(doc.data().createdAt) : new Date(),
-        })) as CaregiverMatch[];
+        const matchesData = snapshot.docs
+          .map(doc => ({
+            ...doc.data(),
+            matchId: doc.id,
+            createdAt: doc.data().createdAt ? new Date(doc.data().createdAt) : new Date(),
+          }))
+          .filter((match: any) => {
+            const name = match.caregiver?.name;
+            return name && name !== 'Nombre no disponible' && name !== 'Unknown Caregiver';
+          }) as CaregiverMatch[]; // Filter out matches without caregiver name or with placeholder names
 
         console.log(`✅ Loaded ${matchesData.length} matches from Claude API`);
         setDebugInfo(prev => [...prev, `Loaded ${matchesData.length} matches`]);
@@ -241,8 +245,6 @@ export default function DashboardPage() {
     <ErrorBoundary>
       <AuthGuard>
         <div className="min-h-screen bg-gray-50">
-          <APIStatusBanner />
-          
           {/* Debug Info Panel */}
           {showDebug && debugInfo.length > 0 && (
             <div className="max-w-7xl mx-auto px-4 py-2">

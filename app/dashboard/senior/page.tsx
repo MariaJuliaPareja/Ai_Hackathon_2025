@@ -8,7 +8,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import type { CaregiverMatch } from '@/lib/types/matching';
 import MatchingInProgress from './components/MatchingInProgress';
 import MatchCard from './components/MatchCard';
-import APIStatusBanner from './components/APIStatusBanner';
 import { processMatchingForSenior } from '@/lib/firebase/functions/processMatching';
 
 const demoMatches: CaregiverMatch[] = [
@@ -200,11 +199,16 @@ export default function SeniorDashboard() {
     );
 
     const unsubscribeMatches = onSnapshot(matchesQuery, (snapshot) => {
-      const matchesData = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        matchId: doc.id,
-        createdAt: doc.data().createdAt ? new Date(doc.data().createdAt) : new Date(),
-      })) as CaregiverMatch[];
+      const matchesData = snapshot.docs
+        .map(doc => ({
+          ...doc.data(),
+          matchId: doc.id,
+          createdAt: doc.data().createdAt ? new Date(doc.data().createdAt) : new Date(),
+        }))
+        .filter((match: any) => {
+          const name = match.caregiver?.name;
+          return name && name !== 'Nombre no disponible' && name !== 'Unknown Caregiver';
+        }) as CaregiverMatch[]; // Filter out matches without caregiver name or with placeholder names
 
       setMatches(matchesData);
     });
@@ -222,7 +226,6 @@ export default function SeniorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <APIStatusBanner />
       {errorMessage && (
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
