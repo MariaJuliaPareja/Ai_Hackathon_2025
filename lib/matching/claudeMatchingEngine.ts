@@ -350,7 +350,6 @@ function generateFallbackScore(
         semanticSimilarity >= 70 ? 'Experiencia relevante con condiciones médicas similares' : 'Experiencia general en cuidado',
       ],
       considerations: [
-        'Análisis detallado con IA no disponible (usando sistema de respaldo)',
         semanticSimilarity < 50 ? 'Experiencia limitada con las condiciones médicas específicas' : undefined,
       ].filter(Boolean) as string[],
       compatibility_factors: {

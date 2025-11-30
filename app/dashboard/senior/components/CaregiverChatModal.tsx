@@ -8,15 +8,14 @@ import { getAnthropicAPIKey } from '@/lib/utils/apiCheck';
 
 // Get API key using the same method as matching engine
 // This ensures consistency across the app
-// ⚠️ TEMPORARY: Hardcoded for demo - replace with getAnthropicAPIKey() after hackathon
-const apiKey = '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';
+const apiKey = getAnthropicAPIKey();
 
 // Debug logging - check in browser console (F12 → Console tab)
 console.log('🔑 CaregiverChatModal API Key Debug:');
 console.log('  - API Key present:', !!apiKey);
 console.log('  - API Key length:', apiKey?.length || 0);
 console.log('  - API Key preview:', apiKey ? apiKey.substring(0, 20) + '...' : 'MISSING');
-console.log('  - API Key format valid:', apiKey ? (apiKey.startsWith('sk-ant-api03-') && apiKey.length > 80) : false);
+console.log('  - API Key format valid:', apiKey ? (apiKey.startsWith('sk-ant-') && apiKey.length > 50) : false);
 
 interface Message {
   role: 'user' | 'assistant';
@@ -50,16 +49,19 @@ const RELEVANT_KEYWORDS = [
 
 // Initialize Anthropic client - same pattern as matching engine
 // Create client once at module level (like matching engine does)
-const anthropicClient = apiKey ? new Anthropic({ 
+// ⚠️ WARNING: dangerouslyAllowBrowser is enabled for hackathon demo only
+// In production, this MUST run on a backend API route to protect the API key
+const anthropicClient = apiKey && apiKey.trim() ? new Anthropic({ 
   apiKey: apiKey.trim(), // Ensure no whitespace
-  dangerouslyAllowBrowser: true, // Required for client-side execution
+  dangerouslyAllowBrowser: true, // Required for client-side execution in Next.js
 }) : null;
 
 const getAnthropicClient = () => {
-  if (!apiKey || !anthropicClient) {
+  if (!apiKey || !apiKey.trim() || !anthropicClient) {
     console.error('❌ NEXT_PUBLIC_ANTHROPIC_API_KEY not found or invalid');
     console.error('   API Key present:', !!apiKey);
     console.error('   API Key length:', apiKey?.length || 0);
+    console.error('   API Key starts with sk-ant-:', apiKey?.startsWith('sk-ant-') || false);
     return null;
   }
   
