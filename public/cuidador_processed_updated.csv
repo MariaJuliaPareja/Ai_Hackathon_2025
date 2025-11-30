@@ -1,0 +1,36 @@
+user_code,age,currently_training,career_clean,edu,exp_years,gender_type,payment,CARE01,CARE02,CARE03,CARE04,CARE05,CARE06,CARE07,CARE08,CARE09,HEALTH01,HEALTH02,HEALTH03,HEALTH04,HEALTH05,HEALTH06,HEALTH07,HEALTH08,HEALTH09,HEALTH10,HEALTH11,HEALTH12,HEALTH13,HEALTH14,Lunes,Martes,Miercoles,Jueves,Viernes,Sabado,Domingo,PSIC1,PSIC2,INTER,Name,especializacion_val,certificacion_val,descripcion_val,turno_val,location,department,department_normalized
+user_00001,28,2,1,8,2,1,6,1,1,1,1,1,0,0,0,0,1,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,Elizabeth Taylor,7,6,2,3,"Piura,Piura,Piura",piura,20
+user_00002,25,2,1,4,2,1,2,1,1,1,1,1,0,0,0,1,0,1,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,1,1,0,Maria Melendez,3,6,7,1,"Los olivos ,Lima,Lima",lima,15
+user_00003,52,2,1,8,1,1,6,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,Elizabeth Taylor,7,2,5,2,"Cercado de Lima ,Lima,Lima",lima,15
+user_00004,30,2,2,6,1,1,1,1,1,0,0,1,1,1,0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,1,1,1,1,1,0,0,0,1,1,Linda Fuentes,8,6,9,2,"San Juan de lurigancho ,Lima,Lima",lima,15
+user_00005,43,1,2,5,4,1,2,0,1,1,1,1,1,1,1,0,1,0,0,1,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,0,0,1,1,1,Barbara McCollins,5,2,4,3,"surco,lima,lima",lima,15
+user_00006,28,2,1,7,1,1,4,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1,1,Jennifer Perez,7,3,10,3,"Lurigancho chosica,Lima,Lima",lima,15
+user_00007,50,2,1,8,3,1,3,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,1,0,1,Maria Melendez,4,8,3,2,"Chiclayo ,Chiclayo ,Lambayeque ",lambayeque,14
+user_00008,28,2,1,8,2,1,6,1,1,1,1,1,0,0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,1,1,1,1,1,1,0,0,0,0,1,Jessica Gomez,6,4,5,3,"Piura,Piura,Piura",piura,20
+user_00009,52,2,2,6,4,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,0,1,0,0,1,1,1,1,1,0,0,0,0,1,Susana Peralta,5,6,3,2,"Pimentel ,Chiclayo ,Lambayeque ",lambayeque,14
+user_00010,48,2,1,8,1,2,5,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,Richard Gommez,6,6,1,1,"Chiclayo ,Chiclayo ,Lambayeque ",lambayeque,14
+user_00011,29,1,2,6,3,1,4,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,0,0,1,0,1,0,0,0,1,1,1,1,1,0,0,0,0,0,Maria Melendez,4,1,10,2,"Tumán,Chiclayo,Lambayeque",lambayeque,14
+user_00012,55,1,2,6,3,1,5,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,0,0,1,0,1,1,1,1,1,1,0,0,1,1,1,Karen Tello,4,8,8,3,"Villamaria triunfo tabalad,Lima,Lima",lima,15
+user_00013,24,1,2,6,2,1,2,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,0,0,1,1,0,Patricia Zapata,8,2,9,2,"La victoria ,Chiclayo ,Lambayeque ",lambayeque,14
+user_00014,30,2,2,6,0,1,3,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,1,1,0,0,1,1,1,Jessica Gomez,5,3,8,1,"La victoria,Chiclayo,Lambayeque ",lambayeque,14
+user_00015,19,1,2,5,2,1,2,1,1,0,1,1,1,1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1,0,1,0,0,1,1,1,Elizabeth Taylor,5,1,3,1,"Villa salvador ,Lima,Lima",lima,15
+user_00016,33,1,1,6,2,1,1,1,1,1,0,1,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1,1,Jessica Gomez,3,1,4,2,"Comas,Comas,Lima",lima,15
+user_00017,37,1,2,6,4,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,0,1,1,1,0,0,1,0,1,0,1,0,0,0,1,0,Sara Martinez,4,1,5,1,"Carabayllo,Lima,Lima",lima,15
+user_00018,55,1,1,8,4,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,0,0,1,0,0,Linda Fuentes,3,2,4,1,"Lambayeque ,Chiclayo ,Chiclayo ",chiclayo,14
+user_00019,48,2,2,6,4,1,4,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,0,0,1,1,1,1,0,1,1,1,1,1,1,0,0,0,1,0,Patricia Zapata,7,7,6,2,"Chancay ,Huaral ,Lima ",lima,15
+user_00020,40,1,1,8,4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,Maria Melendez,2,2,3,2,"San Martin de Porres,lima,lima",lima,15
+user_00021,38,2,3,6,2,1,4,1,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1,1,Jennifer Perez,2,7,6,2,"Chiclayo ,Chiclayo ,Lambayeque ",lambayeque,14
+user_00022,28,2,3,8,3,1,6,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1,1,Jennifer Perez,8,6,5,1,"Independencia ,Lima ,Lima ",lima,15
+user_00023,40,2,0,6,1,1,1,1,1,0,1,1,1,1,0,0,1,0,0,1,1,0,1,0,1,1,1,1,0,0,1,0,1,0,1,0,0,1,0,0,Sara Martinez,2,8,5,1,"Sullana,Sullana,Piura",piura,20
+user_00024,61,1,2,6,1,2,4,0,0,0,1,1,1,0,0,1,0,0,0,1,0,0,0,0,1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0,Miguel Florencio,2,7,5,3,"Smp ,Lima,Lima",lima,15
+user_00025,53,2,3,4,2,1,1,1,1,1,1,1,1,0,0,1,1,1,0,1,0,0,0,1,1,0,1,0,0,0,1,1,1,1,1,0,0,1,0,1,Jessica Gomez,4,7,6,2,"Independencia,Lima,Lima ",lima,15
+user_00026,26,2,3,8,4,1,6,1,1,1,1,1,1,1,0,1,1,1,0,1,0,0,1,1,1,1,0,1,0,0,1,1,1,1,1,0,0,1,1,1,Maria Melendez,1,8,1,3,"Lima,Lima,Jesús María ",jesúsmaría,15
+user_00027,54,1,3,4,4,1,2,1,1,1,1,1,1,1,0,1,0,0,0,0,0,0,0,1,1,0,1,0,0,0,1,1,1,1,1,0,0,1,1,0,Patricia Zapata,3,8,3,2,"Bellavista Callao ,Callao ,Lima",lima,15
+user_00028,26,2,3,8,1,1,6,1,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,1,1,Elizabeth Taylor,5,5,1,3,"Independencia ,Lima ,Lima ",lima,15
+user_00029,35,1,2,6,2,1,2,0,1,1,1,1,1,1,0,0,1,0,0,1,1,0,0,0,0,1,1,0,0,0,1,0,1,0,1,0,0,1,1,0,Maria Melendez,7,2,4,2,"Puente piedra ,Lima,Lima",lima,15
+user_00030,42,1,2,6,4,1,2,1,1,0,1,1,1,1,0,1,1,0,0,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,1,1,0,Susana Peralta,2,2,2,1,"Carabayllo ,Lima,Lima",lima,15
+user_00031,23,1,3,7,4,2,2,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,1,0,0,1,1,1,1,1,0,0,0,0,1,William Carrasco,7,6,8,2,"La Molina,Lima,Lima",lima,15
+user_00032,43,1,3,5,3,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1,Patricia Zapata,4,2,6,1,"San Juan de Lurigancho ,Lima,Lima",lima,15
+user_00033,24,2,1,8,2,1,2,1,1,0,1,1,1,0,0,0,1,0,0,1,0,0,1,0,1,0,0,0,1,1,1,0,1,0,1,0,0,1,1,0,Patricia Zapata,4,5,1,2,"Rimac,Lima,Lima",lima,15
+user_00034,25,1,1,8,4,1,3,1,1,0,1,1,1,1,1,1,1,0,0,0,1,0,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,1,1,Elizabeth Taylor,2,6,9,3,"Chiclayo,Chiclayo ,Lambayeque ",lambayeque,14
+

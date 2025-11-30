@@ -13,14 +13,15 @@ interface StepProps {
 }
 
 const ASSISTANCE_TASK_LABELS: Record<string, string> = {
-  bathing: 'Baño y aseo personal',
-  feeding: 'Alimentación y nutrición',
-  mobility: 'Movilización y transferencias',
-  medication: 'Administración de medicamentos',
-  companionship: 'Compañía y supervisión',
-  housekeeping: 'Tareas del hogar',
-  medical_appointments: 'Acompañamiento a citas médicas',
-  physical_therapy: 'Apoyo en terapia física',
+  compania: 'Compañía',
+  higiene_personal: 'Higiene Personal',
+  preparacion_alimentos: 'Preparación de alimentos saludables',
+  administracion_medicamentos: 'Administración de medicamentos',
+  movilizacion: 'Movilizar a la persona adulta mayor a parques, espacios públicos, citas médicas, etc.',
+  cuidado_postradas: 'Cuidado de personas postradas',
+  primeros_auxilios_basicos: 'Primeros Auxilios Básicos',
+  primeros_auxilios_psicologicos: 'Primeros Auxilios Psicológicos',
+  carga_fisica: 'Cargar físicamente a la persona adulta mayor',
 };
 
 const MOBILITY_LABELS: Record<number, string> = {

@@ -142,6 +142,13 @@ export default function CaregiverJobBoard() {
     return 75;
   };
 
+  const handleDownloadCSV = () => {
+    const link = document.createElement('a');
+    link.href = '/cuidador_processed_updated.csv';
+    link.download = 'cuidador_processed_updated.csv';
+    link.click();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -155,12 +162,22 @@ export default function CaregiverJobBoard() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Tablero de Trabajos
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Encuentra oportunidades de cuidado que se adapten a tu experiencia
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Tablero de Trabajos
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Encuentra oportunidades de cuidado que se adapten a tu experiencia
+              </p>
+            </div>
+            <Button 
+              onClick={handleDownloadCSV} 
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            >
+              Descargar CSV
+            </Button>
+          </div>
         </div>
       </div>
 

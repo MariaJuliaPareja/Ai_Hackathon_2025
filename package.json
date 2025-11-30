@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "verify": "node verify-setup.js",
-    "seed:caregivers": "tsx scripts/seedCaregiversFromCSV.ts"
+    "seed:caregivers": "tsx scripts/seedCaregiversFromCSV.ts",
+    "update:csv": "tsx scripts/updateCaregiverCSV.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",

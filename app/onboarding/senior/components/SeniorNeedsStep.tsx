@@ -46,14 +46,15 @@ interface StepProps {
 }
 
 const ASSISTANCE_TASKS = [
-  { id: 'bathing', label: 'Baño y aseo personal' },
-  { id: 'feeding', label: 'Alimentación y nutrición' },
-  { id: 'mobility', label: 'Movilización y transferencias' },
-  { id: 'medication', label: 'Administración de medicamentos' },
-  { id: 'companionship', label: 'Compañía y supervisión' },
-  { id: 'housekeeping', label: 'Tareas del hogar' },
-  { id: 'medical_appointments', label: 'Acompañamiento a citas médicas' },
-  { id: 'physical_therapy', label: 'Apoyo en terapia física' },
+  { id: 'compania', label: 'Compañía' },
+  { id: 'higiene_personal', label: 'Higiene Personal' },
+  { id: 'preparacion_alimentos', label: 'Preparación de alimentos saludables' },
+  { id: 'administracion_medicamentos', label: 'Administración de medicamentos' },
+  { id: 'movilizacion', label: 'Movilizar a la persona adulta mayor a parques, espacios públicos, citas médicas, etc.' },
+  { id: 'cuidado_postradas', label: 'Cuidado de personas postradas' },
+  { id: 'primeros_auxilios_basicos', label: 'Primeros Auxilios Básicos' },
+  { id: 'primeros_auxilios_psicologicos', label: 'Primeros Auxilios Psicológicos' },
+  { id: 'carga_fisica', label: 'Cargar físicamente a la persona adulta mayor' },
 ];
 
 export default function SeniorNeedsStep({ data, onComplete, onBack, isSubmitting, readOnly = false }: StepProps) {
